@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TIFFY AI - Secure Hybrid Gateway Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root {
+    --electric-blue: #00f0ff;
+    --shocking-pink: #ff007f;
+    --neon-glow-blue: rgba(0, 240, 255, 0.4);
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    margin: 0; padding: 0; width: 100vw; height: 100vh;
+    background: radial-gradient(circle at 50% 50%, #0d1117 0%, #05070a 100%);
+    font-family: 'Orbitron', sans-serif;
+    display: flex; justify-content: center; align-items: center;
+    overflow: hidden; color: #ffffff;
+  }
+
+  .terminal-frame {
+    background: rgba(10, 15, 24, 0.65);
+    backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+    border: 1px solid var(--glass-border);
+    padding: 35px 25px; border-radius: 28px;
+    width: 350px; height: 560px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+
+  .hidden { display: none !important; }
+
+  .brand-header h1 {
+    font-size: 24px; font-weight: 800; margin: 0 0 4px 0; text-align: center;
+    background: linear-gradient(45deg, var(--electric-blue), var(--shocking-pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .brand-header p {
+    color: #8b9bb4; font-size: 10px; margin: 0 0 15px 0;
+    letter-spacing: 2px; text-transform: uppercase; text-align: center;
+  }
+
+  /* PIN Panel Grid layout */
+  .pin-display { display: flex; justify-content: center; gap: 12px; margin: 15px 0 25px 0; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border); transition: all 0.2s ease; }
+  .dot.active { background: var(--electric-blue); box-shadow: 0 0 12px var(--electric-blue); transform: scale(1.1); }
+  .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  
+  .glass-btn {
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    color: #ffffff; font-size: 20px; border-radius: 14px; padding: 14px 0;
+    cursor: pointer; font-family: 'Orbitron', sans-serif; transition: all 0.15s ease;
+  }
+  .glass-btn:active { border-color: var(--electric-blue); color: var(--electric-blue); }
+  .glass-btn.action-btn { font-size: 11px; text-transform: uppercase; color: #ffb6db; }
+
+  /* Dashboard Panel */
+  .balance-card { background: rgba(255, 255, 255, 0.01); border: 1px solid var(--glass-border); border-radius: 16px; padding: 18px; text-align: left; margin-bottom: 12px; }
+  .balance-card .meta-label { font-size: 10px; text-transform: uppercase; color: #8b9bb4; margin: 0; }
+  .balance-card .main-crypto-val { font-size: 28px; font-weight: 800; margin: 6px 0 2px 0; }
+  
+  .token-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .token-tile { background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 12px; padding: 12px; }
+  .token-tile h4 { margin: 0 0 4px 0; font-size: 9px; text-transform: uppercase; color: #8b9bb4; }
+  .token-tile p { margin: 0; font-size: 14px; font-weight: 700; }
+
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .action-panel-btn { 
+    background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; 
+    padding: 14px 0; color: #ffffff; font-weight: 700; font-size: 11px; 
+    text-transform: uppercase; cursor: pointer; font-family: 'Orbitron', sans-serif; 
+  }
+  .action-panel-btn.pay-btn { border-color: var(--shocking-pink); }
+  .action-panel-btn.scan-btn { border-color: #ffffff; grid-column: span 2; }
+  .action-panel-btn.receive-btn { border-color: var(--electric-blue); }
+
+  /* Scanner Display Frame & Upload Fallbacks */
+  .pairing-overlay { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+  #qrcode { background: white; padding: 10px; border-radius: 12px; margin: 15px 0; display: inline-block; }
+  #qrcode img { display: block; }
+  #camera-viewfinder { width: 100%; height: 210px; background: #000000; border-radius: 16px; overflow: hidden; border: 1px solid var(--glass-border); margin: 12px 0; }
+  
+  /* Fallback Upload Block */
+  .fallback-upload-container {
+    border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 16px;
+    padding: 20px; text-align: center; background: rgba(255, 255, 255, 0.01);
+    cursor: pointer; transition: all 0.2s ease; margin: 12px 0; width: 85%;
+  }
+  .fallback-upload-container:hover { border-color: var(--electric-blue); background: rgba(0, 240, 255, 0.02); }
+  .fallback-upload-container p { margin: 0; font-size: 11px; color: #8b9bb4; line-height: 1.5; }
+
+  .status-indicator { text-align: center; font-size: 11px; color: #5f7594; margin-top: 5px; }
+  .status-indicator span { display: inline-block; width: 6px; height: 6px; background: #00ff66; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 8px #00ff66; }
+</style>
+</head>
+<body>
+
+<div class="terminal-frame">
+  
+  <div id="authView">
+    <div class="brand-header">
+      <h1>TIFFY AI</h1>
+      <p id="authTypeLabel">Secure Terminal Access</p>
+    </div>
+
+    <div class="pin-display">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+
+    <div class="pin-grid">
+      <button class="glass-btn" onclick="inputNum(1)">1</button>
+      <button class="glass-btn" onclick="inputNum(2)">2</button>
+      <button class="glass-btn" onclick="inputNum(3)">3</button>
+      <button class="glass-btn" onclick="inputNum(4)">4</button>
+      <button class="glass-btn" onclick="inputNum(5)">5</button>
+      <button class="glass-btn" onclick="inputNum(6)">6</button>
+      <button class="glass-btn" onclick="inputNum(7)">7</button>
+      <button class="glass-btn" onclick="inputNum(8)">8</button>
+      <button class="glass-btn" onclick="inputNum(9)">9</button>
+      <button class="glass-btn action-btn" onclick="clearPin()">Clear</button>
+      <button class="glass-btn" onclick="inputNum(0)">0</button>
+      <button class="glass-btn action-btn" onclick="submitPin()">Enter</button>
+    </div>
+  </div>
+
+  <div id="dashboardView" class="dashboard-view hidden">
+    <div>
+      <div class="brand-header">
+        <h1>TIFFY AI</h1>
+        <p>Active Fluid Index</p>
+      </div>
+
+      <div class="balance-card">
+        <p class="meta-label">Total Liquid Value</p>
+        <div class="main-crypto-val" id="totalBalanceDisplay">$1,450.00</div>
+        <p style="font-size:9px; color:#5f7594; margin:4px 0 0 0;">Platform Mode: Optical / Fallback Link Active</p>
+      </div>
+
+      <div class="token-breakdown">
+        <div class="token-tile" style="border-color: var(--shocking-pink);">
+          <h4 style="color: var(--shocking-pink);">Harvested Utility</h4>
+          <p id="tiffyAmount">0.00</p>
+        </div>
+        <div class="token-tile" style="border-color: var(--electric-blue);">
+          <h4 style="color: var(--electric-blue);">TUSD Nitro</h4>
+          <p id="nitroAmount">1450.00</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="action-grid">
+        <button class="action-panel-btn pay-btn" onclick="openTapToPayMode()">Show Code</button>
+        <button class="action-panel-btn receive-btn" onclick="harvestAndRecollectStore()">Recollect</button>
+        <button class="action-panel-btn scan-btn" onclick="activateEmbeddedScanner()">Scan QR Code</button>
+      </div>
+      <div class="status-indicator">
+        <span></span><span id="statusMessage">System Fully Ready</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="pairingView" class="pairing-overlay hidden">
+    <div class="brand-header">
+      <h1>TRANSACTION LINK</h1>
+      <p>Scan this panel with the partner machine</p>
+    </div>
+    <div id="qrcode"></div>
+    <button class="action-panel-btn" style="width: 100%; border-color: #5f7594;" onclick="exitPairingMode()">Close Request</button>
+  </div>
+
+  <div id="scannerView" class="pairing-overlay hidden">
+    <div class="brand-header">
+      <h1>OPTICAL SYSTEM</h1>
+      <p id="scannerInstructions">Reading hardware data...</p>
+    </div>
+    
+    <div id="camera-viewfinder"></div>
+    
+    <div id="file-fallback-ui" class="fallback-upload-container hidden" onclick="triggerHiddenFileInput()">
+      <p><strong style="color: var(--electric-blue);">Camera Restricted</strong><br>Click to upload or take a fast screenshot/photo of the phone's QR code</p>
+      <input type="file" id="qr-file-input" accept="image/*" style="display: none;" onchange="processUploadedQrImage(this)">
+    </div>
+
+    <button class="action-panel-btn" style="width: 100%; border-color: #5f7594;" onclick="stopEmbeddedScanner()">Cancel Matrix</button>
+  </div>
+
+</div>
+
+<script>
+  let currentPin = "";
+  const maxPinLength = 6;
+  const dots = document.querySelectorAll('.dot');
+  let html5QrcodeScanner = null;
+  
+  const isPinConfigured = localStorage.getItem("terminal_pin_hash") !== null;
+
+  // Initial Configuration Parameters
+  if (!localStorage.getItem("TUSD_Nitro_Storage")) {
+    localStorage.setItem("TUSD_Nitro_Storage", "1450.00");
+  }
+  
+  let rawGameEarnings = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    if (localStorage.key(i).toLowerCase().includes('tetrus') || localStorage.key(i).toLowerCase().includes('tiffy')) {
+      rawGameEarnings += parseFloat(localStorage.getItem(localStorage.key(i))) || 0;
+    }
+  }
+  if (rawGameEarnings === 0) {
+    localStorage.setItem("tetrus_game_score_claim", "84.00");
+  }
+
+  document.getElementById("authTypeLabel").innerText = isPinConfigured ? "Enter Secure PIN" : "Setup Terminal PIN";
+
+  function inputNum(num) {
+    if (currentPin.length < maxPinLength) {
+      currentPin += num;
+      updatePinDisplay();
+    }
+  }
+
+  function clearPin() { currentPin = ""; updatePinDisplay(); }
+
+  function updatePinDisplay() {
+    dots.forEach((dot, index) => {
+      if (index < currentPin.length) dot.classList.add('active');
+      else dot.classList.remove('active');
+    });
+  }
+
+  function submitPin() {
+    if (currentPin.length !== maxPinLength) { alert("PIN must be exactly 6 digits."); return; }
+
+    if (!isPinConfigured) {
+      localStorage.setItem("terminal_pin_hash", btoa(currentPin));
+      alert("Terminal PIN configured successfully! Welcome to TIFFY AI.");
+      location.reload();
+    } else {
+      if (btoa(currentPin) === localStorage.getItem("terminal_pin_hash")) {
+        document.getElementById('authView').classList.add('hidden');
+        document.getElementById('dashboardView').classList.remove('hidden');
+        loadBalancesFromDeviceMemory();
+      } else {
+        alert("Incorrect secure terminal clearance code.");
+        clearPin();
+      }
+    }
+  }
+
+  function loadBalancesFromDeviceMemory() {
+    let discoveredGameEarnings = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const keyName = localStorage.key(i);
+      if (keyName.toLowerCase().includes('tetrus') || keyName.toLowerCase().includes('tiffy')) {
+        discoveredGameEarnings += parseFloat(localStorage.getItem(keyName)) || 0;
+      }
+    }
+    const mainNitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage")) || 1450.00;
+    
+    document.getElementById('tiffyAmount').innerText = discoveredGameEarnings.toLocaleString('en-US', { minimumFractionDigits: 2 });
+    document.getElementById('nitroAmount').innerText = mainNitro.toLocaleString('en-US', { minimumFractionDigits: 2 });
+    document.getElementById('totalBalanceDisplay').innerText = `$${mainNitro.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  }
+
+  async function harvestAndRecollectStore() {
+    const statusText = document.getElementById('statusMessage');
+    let currentTiffy = parseFloat(document.getElementById('tiffyAmount').innerText.replace(/,/g, ''));
+    let currentNitro = parseFloat(document.getElementById('nitroAmount').innerText.replace(/,/g, ''));
+
+    if (currentTiffy <= 0) { statusText.innerText = "No pending assets available."; return; }
+    statusText.innerText = "Rekindling balances... ⏳";
+
+    await new Promise(r => setTimeout(r, 600));
+
+    const itemsToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k.toLowerCase().includes('tetrus') || k.toLowerCase().includes('tiffy')) itemsToRemove.push(k);
+    }
+    itemsToRemove.forEach(k => localStorage.removeItem(k));
+
+    const finalNitro = currentNitro + currentTiffy;
+    localStorage.setItem("TUSD_Nitro_Storage", finalNitro.toFixed(2));
+
+    document.getElementById('tiffyAmount').innerText = "0.00";
+    document.getElementById('nitroAmount').innerText = finalNitro.toLocaleString('en-US', { minimumFractionDigits: 2 });
+    document.getElementById('totalBalanceDisplay').innerText = `$${finalNitro.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    statusText.innerText = "All local assets secured successfully! 🚀";
+  }
+
+  function openTapToPayMode() {
+    let currentNitro = parseFloat(document.getElementById('nitroAmount').innerText.replace(/,/g, ''));
+    if (currentNitro < 10.00) { alert("Insufficient liquidity threshold."); return; }
+
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('pairingView').classList.remove('hidden');
+
+    const txObj = { action: "deduct_payment", amount: 10.00, seed: Math.random() };
+    const bridgePayload = "TIFFY_TX:" + btoa(JSON.stringify(txObj));
+
+    const qr = qrcode(0, 'M');
+    qr.addData(bridgePayload);
+    qr.make();
+    document.getElementById('qrcode').innerHTML = qr.createImgTag(5);
+  }
+
+  // DUAL SECURITY METHOD HARDWARE SENSING SCANNER
+  function activateEmbeddedScanner() {
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('scannerView').classList.remove('hidden');
+    
+    // Always show fallback file interface initially for smooth manual usage
+    document.getElementById('camera-viewfinder').classList.remove('hidden');
+    document.getElementById('file-fallback-ui').classList.add('hidden');
+    document.getElementById('scannerInstructions').innerText = "Align code inside viewfinder container";
+
+    html5QrcodeScanner = new Html5Qrcode("camera-viewfinder");
+    
+    html5QrcodeScanner.start(
+      { facingMode: "environment" }, 
+      { fps: 10, qrbox: { width: 200, height: 200 } },
+      (decodedText) => {
+        if (decodedText.startsWith("TIFFY_TX:")) {
+          stopEmbeddedScanner();
+          processOpticalPayloadData(decodedText.split("TIFFY_TX:")[1]);
+        }
+      },
+      (errorMessage) => { /* Continue engine capture framework silently */ }
+    ).catch(err => {
+      // TRIGGER AUTOMATIC HYBRID FALLBACK: Device blocking secure context file structure camera streaming
+      console.warn("Hardware streaming rejected by browser sandbox. Engaging file reader fallback.");
+      document.getElementById('camera-viewfinder').classList.add('hidden');
+      document.getElementById('file-fallback-ui').classList.remove('hidden');
+      document.getElementById('scannerInstructions').innerText = "Security Sandbox: Upload Mode Active";
+    });
+  }
+
+  function triggerHiddenFileInput() {
+    document.getElementById('qr-file-input').click();
+  }
+
+  function processUploadedQrImage(inputElement) {
+    if (inputElement.files && inputElement.files[0]) {
+      const imageFile = inputElement.files[0];
+      const fallbackDecoder = new Html5Qrcode("camera-viewfinder");
+      
+      fallbackDecoder.scanFile(imageFile, false)
+        .then(decodedText => {
+          if (decodedText.startsWith("TIFFY_TX:")) {
+            exitPairingMode();
+            processOpticalPayloadData(decodedText.split("TIFFY_TX:")[1]);
+          } else {
+            alert("Unrecognized matrix string inside asset payload.");
+          }
+        })
+        .catch(err => {
+          alert("Decoding Failure: Could not recognize or scan a crisp transaction block inside image.");
+        });
+    }
+  }
+
+  function processOpticalPayloadData(base64Packet) {
+    try {
+      const decodedTx = JSON.parse(atob(base64Packet));
+      if (decodedTx.action === "deduct_payment") {
+        let currentNitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage")) || 1450.00;
+        
+        if (currentNitro >= decodedTx.amount) {
+          currentNitro -= decodedTx.amount;
+          localStorage.setItem("TUSD_Nitro_Storage", currentNitro.toFixed(2));
+          
+          alert(`✨ SILK SMOOTH CLEARANCE!\nSuccessfully finalized packet link transaction. Deducted $${decodedTx.amount.toFixed(2)} from active main balance.`);
+          loadBalancesFromDeviceMemory();
+        } else {
+          alert("Clearance Denied: Profile has insufficient liquidity bounds.");
+        }
+      }
+    } catch (e) {
+      alert("Decryption parsing configuration error.");
+    }
+  }
+
+  function stopEmbeddedScanner() {
+    if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+      html5QrcodeScanner.stop().then(() => {
+        html5QrcodeScanner = null;
+        exitPairingMode();
+      }).catch(() => {
+        html5QrcodeScanner = null;
+        exitPairingMode();
+      });
+    } else {
+      exitPairingMode();
+    }
+  }
+
+  function exitPairingMode() {
+    document.getElementById('pairingView').classList.add('hidden');
+    document.getElementById('scannerView').classList.add('hidden');
+    document.getElementById('dashboardView').classList.remove('hidden');
+    loadBalancesFromDeviceMemory();
+  }
+</script>
+</body>
+</html>
