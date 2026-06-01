@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --electric-blue: #00f0ff;
+    --shocking-pink: #ff007f;
+    --neon-glow-blue: rgba(0, 240, 255, 0.4);
+    --neon-glow-pink: rgba(255, 0, 127, 0.4);
+    --glass-bg: rgba(255, 255, 255, 0.02);
+    --glass-border: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at 50% 50%, #0d1117 0%, #05070a 100%);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    color: #ffffff;
+  }
+
+  /* Shared Terminal Shell */
+  .terminal-frame {
+    background: rgba(10, 15, 24, 0.6);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid var(--glass-border);
+    padding: 40px 30px;
+    border-radius: 28px;
+    width: 360px;
+    height: 520px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  /* Header Branding Styles */
+  .brand-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0 0 5px 0;
+    letter-spacing: 2px;
+    text-align: center;
+    background: linear-gradient(45deg, var(--electric-blue), var(--shocking-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 15px var(--neon-glow-pink));
+  }
+
+  .brand-header p {
+    color: #8b9bb4;
+    font-size: 11px;
+    margin: 0 0 25px 0;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  /* ==================== SCREEN 1: SECURE PIN PAD ==================== */
+  .pin-display {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0 35px 0;
+  }
+
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .dot.active {
+    background: var(--electric-blue);
+    box-shadow: 0 0 12px var(--electric-blue), 0 0 25px var(--electric-blue);
+    transform: scale(1.2);
+  }
+
+  .pin-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+  }
+
+  .glass-btn {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 600;
+    padding: 16px 0;
+    border-radius: 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+  }
+
+  .glass-btn:active {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--electric-blue);
+    box-shadow: 0 0 15px var(--neon-glow-blue), inset 0 0 10px var(--neon-glow-blue);
+    color: var(--electric-blue);
+    transform: scale(0.95);
+  }
+
+  .glass-btn.action-btn {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: #ffb6db;
+  }
+
+  .glass-btn.action-btn:active {
+    background: rgba(255, 0, 127, 0.15);
+    border-color: var(--shocking-pink);
+    box-shadow: 0 0 15px var(--neon-glow-pink), inset 0 0 10px var(--neon-glow-pink);
+    color: var(--shocking-pink);
+  }
+
+  /* ==================== SCREEN 2: LIQUID DASHBOARD ==================== */
+  .dashboard-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* The Total Assets Card */
+  .balance-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 22px;
+    text-align: left;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .balance-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, var(--neon-glow-blue) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .balance-card .meta-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #8b9bb4;
+    margin: 0;
+  }
+
+  .balance-card .main-crypto-val {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 10px 0 4px 0;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+  }
+
+  .balance-card .stable-fiat-pair {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--electric-blue);
+    text-shadow: 0 0 10px var(--neon-glow-blue);
+    margin: 0;
+  }
+
+  /* Token Split breakdown grid */
+  .token-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 25px;
+  }
+
+  .token-tile {
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .token-tile h4 {
+    margin: 0 0 6px 0;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .token-tile.tiffy h4 { color: var(--shocking-pink); }
+  .token-tile.nitro h4 { color: var(--electric-blue); }
+
+  .token-tile p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  /* P2P / Tap Action Panel */
+  .action-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+
+  .action-panel-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 18px 0;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .action-panel-btn.pay-btn {
+    border-color: var(--shocking-pink);
+    box-shadow: 0 0 15px rgba(255, 0, 127, 0.15);
+  }
+
+  .action-panel-btn.pay-btn:active {
+    background: var(--shocking-pink);
+    box-shadow: 0 0 25px var(--shocking-pink);
+    transform: scale(0.96);
+  }
+
+  .action-panel-btn.receive-btn {
+    border-color: var(--electric-blue);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+  }
+
+  .action-panel-btn.receive-btn:active {
+    background: var(--electric-blue);
+    box-shadow: 0 0 25px var(--electric-blue);
+    color: #05070a;
+    transform: scale(0.96);
+  }
+
+  .status-indicator {
+    text-align: center;
+    font-size: 11px;
+    color: #5f7594;
+    letter-spacing: 0.5px;
+    margin-top: 15px;
+  }
+
+  .status-indicator span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #00ff66;
+    border-radius: 50%;
+    margin-right: 6px;
+    box-shadow: 0 0 8px #00ff66;
+  }
+</style>
+<title>TiffyAI Global Gateway</title>
+</head>
+<body>
+
+<div class="terminal-frame">
+  
+  <!-- ==================== VIEW 1: AUTHENTICATION ==================== -->
+  <div id="authView">
+    <div class="brand-header">
+      <h1>TIFFY AI</h1>
+      <p>Secure Vault Access</p>
+    </div>
+
+    <div class="pin-display">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <div class="pin-grid">
+      <button class="glass-btn" onclick="inputNum(1)">1</button>
+      <button class="glass-btn" onclick="inputNum(2)">2</button>
+      <button class="glass-btn" onclick="inputNum(3)">3</button>
+      
+      <button class="glass-btn" onclick="inputNum(4)">4</button>
+      <button class="glass-btn" onclick="inputNum(5)">5</button>
+      <button class="glass-btn" onclick="inputNum(6)">6</button>
+      
+      <button class="glass-btn" onclick="inputNum(7)">7</button>
+      <button class="glass-btn" onclick="inputNum(8)">8</button>
+      <button class="glass-btn" onclick="inputNum(9)">9</button>
+      
+      <button class="glass-btn action-btn" onclick="clearPin()">Clear</button>
+      <button class="glass-btn" onclick="inputNum(0)">0</button>
+      <button class="glass-btn action-btn" onclick="submitPin()">Enter</button>
+    </div>
+  </div>
+
+  <!-- ==================== VIEW 2: LIQUID DASHBOARD ==================== -->
+  <div id="dashboardView" class="dashboard-view hidden">
+    <div>
+      <div class="brand-header">
+        <h1>TIFFY AI</h1>
+        <p>Liquid Network Active</p>
+      </div>
+
+      <!-- Main Consolidated Value Display -->
+      <div class="balance-card">
+        <p class="meta-label">Total Liquid Value</p>
+        <div class="main-crypto-val" id="totalBalanceDisplay">$1,450.00</div>
+        <p class="stable-fiat-pair">Indexed Local Ledger</p>
+      </div>
+
+      <!-- Token Splits Driven Natively by Pairs -->
+      <div class="token-breakdown">
+        <div class="token-tile tiffy">
+          <h4>Tiffy Utility</h4>
+          <p id="tiffyAmount">8,000.00</p>
+        </div>
+        <div class="token-tile nitro">
+          <h4>TUSD Nitro</h4>
+          <p id="nitroAmount">1,450.00</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- P2P High-Speed Actions (Tap Payment / Handshakes) -->
+    <div>
+      <div class="action-strip">
+        <button class="action-panel-btn pay-btn" onclick="executeLocalPayment()">Tap to Pay</button>
+        <button class="action-panel-btn receive-btn" onclick="triggerReceiveState()">Receive</button>
+      </div>
+      <div class="status-indicator">
+        <span></span>Local Encrypted Sandbox Connected
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let currentPin = "";
+  const maxPinLength = 6;
+  const dots = document.querySelectorAll('.dot');
+
+  function inputNum(num) {
+    if (currentPin.length < maxPinLength) {
+      currentPin += num;
+      updatePinDisplay();
+      if (navigator.vibrate) navigator.vibrate(40);
+    }
+  }
+
+  function clearPin() {
+    currentPin = "";
+    updatePinDisplay();
+    if (navigator.vibrate) navigator.vibrate(20);
+  }
+
+  function updatePinDisplay() {
+    dots.forEach((dot, index) => {
+      if (index < currentPin.length) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+  }
+
+  function submitPin() {
+    if (currentPin.length === maxPinLength) {
+      if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+      
+      // Animate the transition between local authentication and local dashboard
+      document.getElementById('authView').classList.add('hidden');
+      document.getElementById('dashboardView').classList.remove('hidden');
+    } else {
+      alert("Please enter your secure 6-digit terminal PIN.");
+    }
+  }
+
+  // Frontend demonstration simulation for instant value deduction via Local Storage layout
+  async function executeLocalPayment() {
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    
+    let currentNitro = parseFloat(document.getElementById('nitroAmount').innerText.replace(/,/g, ''));
+    if (currentNitro >= 10) {
+      // Simulate 0-ms instant UI balance adjustments
+      currentNitro -= 10.00;
+      
+      document.getElementById('nitroAmount').innerText = currentNitro.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('totalBalanceDisplay').innerText = `$${currentNitro.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      
+      console.log("Transaction authorization signed offline and logged to background sync queue!");
+    } else {
+      alert("Insufficient liquidity in local storage vault.");
+    }
+  }
+
+  function triggerReceiveState() {
+    if (navigator.vibrate) navigator.vibrate(50);
+    alert("NFC Broadcast initialized. Ready for inbound peer handshake...");
+  }
+</script>
+
+</body>
+</html>
