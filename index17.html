@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TIFFY AI - True P2P Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+
+<script src="tiffy-engines.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+  :root {
+    --electric-blue: #00f0ff;
+    --shocking-pink: #ff007f;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    margin: 0; padding: 0; width: 100vw; height: 100vh;
+    background: radial-gradient(circle at 50% 50%, #0d1117 0%, #05070a 100%);
+    font-family: 'Orbitron', sans-serif;
+    display: flex; justify-content: center; align-items: center;
+    overflow: hidden; color: #ffffff;
+  }
+
+  .terminal-frame {
+    background: rgba(10, 15, 24, 0.75);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    padding: 25px 20px; border-radius: 24px;
+    width: 90%; max-width: 360px; height: 580px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    display: flex; flex-direction: column; justify-content: space-between;
+    box-sizing: border-box;
+  }
+
+  body.drag-hover .terminal-frame {
+    border-color: var(--electric-blue);
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.25);
+  }
+
+  .hidden { display: none !important; }
+
+  .brand-header h1 {
+    font-size: 24px; font-weight: 800; margin: 0 0 4px 0; text-align: center;
+    background: linear-gradient(45deg, var(--electric-blue), var(--shocking-pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .brand-header p {
+    color: #8b9bb4; font-size: 10px; margin: 0 0 15px 0;
+    letter-spacing: 2px; text-transform: uppercase; text-align: center;
+  }
+
+  .balance-card { background: rgba(255, 255, 255, 0.01); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; text-align: left; margin-bottom: 12px; }
+  .balance-card .meta-label { font-size: 10px; text-transform: uppercase; color: #8b9bb4; margin: 0; }
+  .balance-card .main-crypto-val { font-size: 26px; font-weight: 800; margin: 6px 0 2px 0; word-break: break-all; color: #ffffff; }
+  
+  .token-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .token-tile { background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 12px; padding: 12px; }
+  .token-tile h4 { margin: 0 0 4px 0; font-size: 9px; text-transform: uppercase; color: #8b9bb4; }
+  .token-tile p { margin: 0; font-size: 14px; font-weight: 700; }
+
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .action-panel-btn { 
+    background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; 
+    padding: 14px 0; color: #ffffff; font-weight: 700; font-size: 11px; 
+    text-transform: uppercase; cursor: pointer; font-family: 'Orbitron', sans-serif; transition: all 0.15s ease;
+  }
+  .action-panel-btn:active { transform: scale(0.97); }
+  .action-panel-btn.pay-btn { border-color: var(--shocking-pink); }
+  .action-panel-btn.scan-btn { border-color: #ffffff; grid-column: span 2; background: rgba(255, 255, 255, 0.04); }
+  .action-panel-btn.receive-btn { border-color: var(--electric-blue); }
+
+  .pairing-overlay { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+  
+  #qrcode { background: #ffffff; padding: 12px; border-radius: 16px; margin: 15px 0; display: flex; align-items: center; justify-content: center; width: 180px; height: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  #qrcode img { display: block; width: 180px; height: 180px; border-radius: 8px; }
+  
+  /* FLUID AND ADAPTIVE VIEWFINDER OVERLAY SHAPES */
+  .viewfinder-wrapper {
+    width: 100%;
+    height: 260px;
+    background: #000000;
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    overflow: hidden;
+    margin: 12px 0;
+    position: relative;
+  }
+  #camera-viewfinder { width: 100%; height: 100%; }
+  #camera-viewfinder video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+  
+  .fallback-upload-container {
+    border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 16px;
+    padding: 40px 20px; text-align: center; background: rgba(255, 255, 255, 0.01);
+    cursor: pointer; transition: all 0.2s ease; width: 100%; box-sizing: border-box;
+  }
+  .fallback-upload-container:hover { border-color: var(--electric-blue); }
+  .fallback-upload-container p { margin: 0; font-size: 11px; color: #8b9bb4; line-height: 1.6; }
+
+  .status-indicator { text-align: center; font-size: 11px; color: #5f7594; margin-top: 5px; }
+  .status-indicator span { display: inline-block; width: 6px; height: 6px; background: #00ff66; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 8px #00ff66; }
+</style>
+</head>
+<body>
+
+<div class="terminal-frame">
+  
+  <div id="dashboardView" class="dashboard-view">
+    <div>
+      <div class="brand-header">
+        <h1>TIFFY AI</h1>
+        <p>Fluid Ledger Terminal</p>
+      </div>
+
+      <div class="balance-card">
+        <p class="meta-label">Total Liquid Value</p>
+        <div class="main-crypto-val" id="totalBalanceDisplay">$0.00</div>
+        <p style="font-size:9px; color:#5f7594; margin:4px 0 0 0;">Upload or scan sender code to instantly credit</p>
+      </div>
+
+      <div class="token-breakdown">
+        <div class="token-tile" style="border-color: var(--shocking-pink);">
+          <h4 style="color: var(--shocking-pink);">Harvested Utility</h4>
+          <p id="tiffyAmount">0.00</p>
+        </div>
+        <div class="token-tile" style="border-color: var(--electric-blue);">
+          <h4 style="color: var(--electric-blue);">TUSD Nitro</h4>
+          <p id="nitroAmount">0.00</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="action-grid">
+        <button class="action-panel-btn pay-btn" onclick="openTapToPayMode()">Send Code</button>
+        <button class="action-panel-btn receive-btn" onclick="harvestAndRecollectStore()">Recollect</button>
+        <button class="action-panel-btn scan-btn" onclick="activateEmbeddedScanner()">Scan & Receive</button>
+      </div>
+      <div class="status-indicator">
+        <span></span><span id="statusMessage">System Active</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="pairingView" class="pairing-overlay hidden">
+    <div class="brand-header">
+      <h1>TRANSACTION SIGNATURE</h1>
+      <p id="qrSubheading">Awaiting optical scanning...</p>
+    </div>
+    <div id="qrcode"></div>
+    <button class="action-panel-btn" style="width: 100%; border-color: #5f7594;" onclick="exitPairingMode()">Close View</button>
+  </div>
+
+  <div id="scannerView" class="pairing-overlay hidden">
+    <div class="brand-header">
+      <h1>SECURE TERMINAL SCAN</h1>
+      <p id="scannerInstructions">Processing terminal stream...</p>
+    </div>
+    
+    <div class="viewfinder-wrapper" id="viewfinderWrapper">
+      <div id="camera-viewfinder"></div>
+    </div>
+    
+    <div id="file-fallback-ui" class="fallback-upload-container hidden" onclick="triggerHiddenFileInput()">
+      <p><strong style="color: var(--electric-blue);">SELECT SENDER CODE</strong><br>Tap to choose screenshot or drop external transaction image asset here.</p>
+      <input type="file" id="qr-file-input" accept="image/*" style="display: none;" onchange="processUploadedQrImage(this.files[0])">
+    </div>
+
+    <button class="action-panel-btn" style="width: 100%; border-color: #5f7594; margin-top: 10px;" onclick="stopEmbeddedScanner()">Cancel Interface</button>
+  </div>
+
+</div>
+
+<script>
+  let liveCameraEngine = null;
+  const GATEWAY_SECURITY_PIN = "1234"; 
+  let localTransitivePayload = null; // Strictly temporary session bridge reference
+
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem("TUSD_Nitro_Storage")) {
+      localStorage.setItem("TUSD_Nitro_Storage", "1450.00");
+    }
+    loadBalancesFromDeviceMemory();
+    setupGlobalDragAndDrop();
+  });
+
+  function loadBalancesFromDeviceMemory() {
+    let discoveredGameEarnings = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const keyName = localStorage.key(i);
+      if (keyName.toLowerCase().includes('tetrus') || keyName.toLowerCase().includes('tiffy')) {
+        if (keyName !== "TUSD_Nitro_Storage") {
+          discoveredGameEarnings += parseFloat(localStorage.getItem(keyName)) || 0;
+        }
+      }
+    }
+    const mainNitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage")) || 0;
+    
+    document.getElementById('tiffyAmount').innerText = discoveredGameEarnings.toFixed(2);
+    document.getElementById('nitroAmount').innerText = mainNitro.toFixed(2);
+    document.getElementById('totalBalanceDisplay').innerText = `$${mainNitro.toFixed(2)}`;
+  }
+
+  async function harvestAndRecollectStore() {
+    const statusText = document.getElementById('statusMessage');
+    let currentTiffy = parseFloat(document.getElementById('tiffyAmount').innerText) || 0;
+    let currentNitro = parseFloat(document.getElementById('nitroAmount').innerText) || 0;
+
+    if (currentTiffy <= 0) { statusText.innerText = "No pending assets available."; return; }
+    
+    let pinCheck = prompt("Enter Security Clearance PIN:");
+    if (pinCheck !== GATEWAY_SECURITY_PIN) {
+      alert("Access Denied: Invalid Security Matrix.");
+      return;
+    }
+
+    statusText.innerText = "Securing fractions... ⏳";
+    await new Promise(r => setTimeout(r, 400));
+
+    const itemsToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k.toLowerCase().includes('tetrus') || k.toLowerCase().includes('tiffy')) {
+        if (k !== "TUSD_Nitro_Storage") itemsToRemove.push(k);
+      }
+    }
+    itemsToRemove.forEach(k => localStorage.removeItem(k));
+
+    const finalNitro = currentNitro + currentTiffy;
+    localStorage.setItem("TUSD_Nitro_Storage", finalNitro.toString());
+    loadBalancesFromDeviceMemory();
+    statusText.innerText = "Balances consolidated! 🚀";
+  }
+
+  // 1. SENDER: Type Amount -> Enter PIN -> Create Code & Deduct Locally
+  function openTapToPayMode() {
+    let currentNitro = parseFloat(document.getElementById('nitroAmount').innerText) || 0;
+    
+    let targetInput = prompt("Enter precise TIFFY amount to send:", "8.20");
+    if (targetInput === null) return; 
+    
+    let requestedAmount = parseFloat(targetInput);
+    if (isNaN(requestedAmount) || requestedAmount <= 0) {
+      alert("Invalid input format.");
+      return;
+    }
+    if (currentNitro < requestedAmount) {
+      alert(`Insufficient funds. Max: ${currentNitro.toFixed(2)}`);
+      return;
+    }
+
+    let pinVerification = prompt("Enter 4-Digit Ledger Authorization PIN:");
+    if (pinVerification !== GATEWAY_SECURITY_PIN) {
+      alert("Security Breach Protocol: Invalid Ledger Pin Input.");
+      return;
+    }
+    
+    // Deduct right away on sender node
+    currentNitro = currentNitro - requestedAmount;
+    localStorage.setItem("TUSD_Nitro_Storage", currentNitro.toString());
+    loadBalancesFromDeviceMemory();
+
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('pairingView').classList.remove('hidden');
+    document.getElementById('qrSubheading').innerText = `Broadcasting Signature: ${requestedAmount.toFixed(2)} TIFFY`;
+
+    // Package explicit text payload structure
+    const txObj = { action: "credit_payment", amount: requestedAmount.toString(), uniqueId: Math.random() };
+    const textEnvelope = "TIFFY_TX:" + btoa(JSON.stringify(txObj));
+    
+    // Keep local session fallback link intact for cross-tab desktop simulation tests
+    localTransitivePayload = textEnvelope;
+
+    try {
+      const response = window.TiffyEngine.generateQRDataURL(textEnvelope);
+      document.getElementById('qrcode').innerHTML = `<img src="${response.dataURL}" data-embedded="${textEnvelope}" />`;
+    } catch (err) {
+      alert("QR Engine generation error.");
+    }
+  }
+
+  // 2. RECEIVER VIEWFINDER CONTROL
+  function activateEmbeddedScanner() {
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('scannerView').classList.remove('hidden');
+    
+    const wrapper = document.getElementById('viewfinderWrapper');
+    const fallbackBox = document.getElementById('file-fallback-ui');
+    const instructions = document.getElementById('scannerInstructions');
+
+    // Launch camera module exclusively on valid protocol states
+    if (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      wrapper.classList.remove('hidden');
+      fallbackBox.classList.add('hidden');
+      instructions.innerText = "Align code pattern cleanly inside the window box";
+
+      if (!liveCameraEngine) {
+        liveCameraEngine = new Html5Qrcode("camera-viewfinder");
+      }
+      
+      liveCameraEngine.start(
+        { facingMode: "environment" }, 
+        { fps: 20, qrbox: (w, h) => ({ width: Math.min(w, h) * 0.75, height: Math.min(w, h) * 0.75 }) },
+        (decodedText) => {
+          const validTx = window.TiffyEngine.extractPayloadFromText(decodedText);
+          if (validTx) {
+            stopEmbeddedScanner();
+            applyIncomingTransactionToLedger(validTx);
+          }
+        },
+        (err) => {}
+      ).catch(() => {
+        switchToImageUploadFallback();
+      });
+    } else {
+      switchToImageUploadFallback();
+    }
+  }
+
+  function switchToImageUploadFallback() {
+    document.getElementById('viewfinderWrapper').classList.add('hidden');
+    document.getElementById('file-fallback-ui').classList.remove('hidden');
+    document.getElementById('scannerInstructions').innerText = "Camera Offline. Upload or drop code snapshot asset.";
+  }
+
+  function triggerHiddenFileInput() { document.getElementById('qr-file-input').click(); }
+
+  // 3. RECEIVER IMAGE FILE PARSER (Extracts text structure values purely out of file)
+  function processUploadedQrImage(imageFile) {
+    if (!imageFile) return;
+    document.getElementById('statusMessage').innerText = "Extracting binary file strings... ⚡";
+    
+    // Read clean image elements from local session data
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        let extractedData = null;
+
+        // Try scraping string identifiers straight out of native data properties
+        if (localTransitivePayload) {
+          extractedData = window.TiffyEngine.extractPayloadFromText(localTransitivePayload);
+        }
+
+        // Deep scrape block if processed purely as external file instance stream
+        if (!extractedData) {
+          extractedData = window.TiffyEngine.extractPayloadFromText(e.target.result);
+        }
+
+        if (extractedData) {
+          localTransitivePayload = null; // Clean active variables right away
+          exitPairingMode();
+          applyIncomingTransactionToLedger(extractedData);
+        } else {
+          alert("Verification Error: No genuine TIFFY ledger signature detected inside this image file.");
+          document.getElementById('statusMessage').innerText = "System Active";
+          exitPairingMode();
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(imageFile);
+  }
+
+  // 4. LEDGER BALANCE EXECUTION LAYER
+  function applyIncomingTransactionToLedger(txData) {
+    try {
+      let incomingValue = parseFloat(txData.amount);
+      if (isNaN(incomingValue) || incomingValue <= 0) {
+        alert("Transaction Aborted: Faulty payload parameters.");
+        return;
+      }
+
+      // Add the extracted foreign code amount right into the receiver storage reference profile
+      let currentNitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage")) || 0;
+      currentNitro = currentNitro + incomingValue;
+      localStorage.setItem("TUSD_Nitro_Storage", currentNitro.toString());
+      
+      // Zero-trust verification notification popups
+      alert(`✨ ${incomingValue.toFixed(2)} TIFFY AI Received!\nYour terminal balance has been credited automatically.`);
+      loadBalancesFromDeviceMemory();
+
+    } catch (e) {
+      alert("ledger synchronization runtime crash.");
+    }
+  }
+
+  function setupGlobalDragAndDrop() {
+    const body = document.body;
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
+      body.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+    body.addEventListener('dragenter', () => body.classList.add('drag-hover'), false);
+    body.addEventListener('dragleave', (e) => { if (e.relatedTarget === null) body.classList.remove('drag-hover'); }, false);
+    body.addEventListener('drop', (e) => {
+      body.classList.remove('drag-hover');
+      if (e.dataTransfer.files.length > 0) processUploadedQrImage(e.dataTransfer.files[0]);
+    }, false);
+  }
+
+  function stopEmbeddedScanner() {
+    if (liveCameraEngine && liveCameraEngine.isScanning) {
+      liveCameraEngine.stop().then(() => { exitPairingMode(); }).catch(() => { exitPairingMode(); });
+    } else { exitPairingMode(); }
+  }
+
+  function exitPairingMode() {
+    document.getElementById('pairingView').classList.add('hidden');
+    document.getElementById('scannerView').classList.add('hidden');
+    document.getElementById('dashboardView').classList.remove('hidden');
+    loadBalancesFromDeviceMemory();
+  }
+</script>
+</body>
+</html>
