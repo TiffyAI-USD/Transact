@@ -16,7 +16,7 @@
         #qrcode { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; width: 200px !important; height: 200px !important; }
         .viewfinder-wrapper { width: 100%; height: 260px; background: #000; margin: 12px 0; border: 2px dashed var(--glass-border); }
         .share-container { text-align: center; margin-top: 10px; }
-        .share-btn { background: none; border: 1px solid var(--glass-border); color: var(--electric-blue); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+        .share-btn { background: var(--electric-blue); color: #000; border: none; font-weight: bold; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 12px; width: 100%; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -49,8 +49,7 @@
         <h2 style="text-align:center; font-size:14px;">SHOW TO RECEIVER</h2>
         <canvas id="qrcode"></canvas>
         <div class="share-container">
-            <button class="share-btn" onclick="shareTransaction()">SHARE TRANSACTION 🔗</button>
-            <p style="font-size: 9px; color: #666; margin-top: 10px;">Long press QR to save image</p>
+            <button class="share-btn" onclick="shareTransaction()">SHARE QR & LINK 🔗</button>
         </div>
         <button class="action-panel-btn" onclick="exitMode()">BACK TO DASHBOARD</button>
     </div>
@@ -70,16 +69,25 @@
         }
     };
 
-    function shareTransaction() {
-        const shareData = {
-            title: 'Tiffy AI Transaction',
-            text: 'Scan my QR code or open this link to complete the transaction:',
-            url: 'https://tiffyai-usd.github.io/Transact/index46.html'
-        };
-        if (navigator.share) {
-            navigator.share(shareData).catch(console.error);
-        } else {
-            alert("Copy this link to share: " + shareData.url);
+    async function shareTransaction() {
+        const canvas = document.getElementById('qrcode');
+        try {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
+            
+            const shareData = {
+                title: 'Tiffy AI Transaction',
+                text: 'Complete your secure Tiffy AI transaction here: https://tiffyai-usd.github.io/Transact/index46.html',
+                files: [file]
+            };
+
+            if (navigator.canShare && navigator.canShare(shareData)) {
+                await navigator.share(shareData);
+            } else {
+                alert("Sharing not supported on this browser. Save the QR code image manually.");
+            }
+        } catch (err) {
+            console.error('Sharing failed', err);
         }
     }
 
