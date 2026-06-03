@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TIFFY Offline Ledger</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .box { background: #333; padding: 20px; border-radius: 10px; width: 100%; max-width: 400px; text-align: center; }
+        input, button { width: 90%; padding: 10px; margin: 10px 0; }
+        #canvas { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>TIFFY Ledger</h2>
+    <p>Balance: <span id="balance">1450.00</span></p>
+    
+    <h3>Send (Generate QR)</h3>
+    <input type="number" id="sendAmount" placeholder="Amount">
+    <button onclick="generateQR()">Generate Code</button>
+    <canvas id="qrCanvas"></canvas>
+
+    <h3>Receive (Scan QR)</h3>
+    <input type="file" id="fileInput" accept="image/*" onchange="scanImage(this)">
+    <p id="status"></p>
+</div>
+
+<script>
+    // 1. GENERATE (Local only)
+    function generateQR() {
+        const amt = document.getElementById('sendAmount').value;
+        const data = JSON.stringify({ action: "tx", amount: amt, id: Date.now() });
+        const canvas = document.getElementById('qrCanvas');
+        QRCode.toCanvas(canvas, "TIFFY_TX:" + btoa(data), { width: 200 }, (err) => {
+            if (err) console.error(err);
+        });
+    }
+
+    // 2. SCAN (Local only)
+    function scanImage(input) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width; canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(data.data, data.width, data.height);
+                if (code) {
+                    processData(code.data);
+                } else {
+                    document.getElementById('status').innerText = "No code found.";
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 3. EXECUTE
+    function processData(raw) {
+        if (!raw.startsWith("TIFFY_TX:")) return;
+        const json = JSON.parse(atob(raw.split(":")[1]));
+        const current = parseFloat(document.getElementById('balance').innerText);
+        const newBal = current + parseFloat(json.amount);
+        document.getElementById('balance').innerText = newBal.toFixed(2);
+        document.getElementById('status').innerText = "Received: " + json.amount;
+    }
+</script>
+</body>
+</html>
