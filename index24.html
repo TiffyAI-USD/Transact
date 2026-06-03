@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIFFY AI - PRODUCTION TERMINAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        :root { --electric-blue: #00f0ff; --shocking-pink: #ff007f; --bg: #05070a; --glass: rgba(255,255,255,0.05); }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .terminal { width: 360px; background: rgba(10, 15, 24, 0.9); border: 1px solid #333; padding: 25px; border-radius: 20px; text-align: center; backdrop-filter: blur(10px); }
+        .balance-val { font-size: 32px; font-weight: 800; margin: 15px 0; color: var(--electric-blue); }
+        .btn { width: 100%; padding: 16px; margin: 8px 0; border: 1px solid #444; background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; border-radius: 12px; font-weight: 700; text-transform: uppercase; transition: 0.2s; }
+        .btn:hover { border-color: var(--electric-blue); }
+        .hidden { display: none !important; }
+        #canvas { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; }
+        #viewfinder { width: 100%; height: 260px; background: #000; border-radius: 12px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="terminal">
+    <div id="dash">
+        <h1>TIFFY NODE</h1>
+        <div class="balance-val" id="bal-display">$0.00</div>
+        <div id="pending-ui" class="hidden">
+            <p style="color:var(--shocking-pink); font-size:12px;">PENDING: <span id="pend-val">0.00</span></p>
+            <button class="btn" style="border-color:var(--shocking-pink);" onclick="voidTx()">VOID TRANSACTION</button>
+        </div>
+        <button class="btn" onclick="openSend()">SEND ASSET</button>
+        <button class="btn" onclick="openScan()">SCAN & RECEIVE</button>
+    </div>
+
+    <div id="sendView" class="hidden">
+        <h2 style="font-size:16px;">SECURE BROADCAST</h2>
+        <canvas id="canvas"></canvas>
+        <button class="btn" onclick="location.reload()">CANCEL</button>
+    </div>
+
+    <div id="scanView" class="hidden">
+        <h2 style="font-size:16px;">SCANNING MATRIX</h2>
+        <div id="viewfinder"></div>
+        <button class="btn" onclick="location.reload()">CANCEL</button>
+    </div>
+</div>
+
+<script>
+    const BAL_KEY = "TUSD_Nitro";
+    const PEND_KEY = "Tiffy_Pending";
+
+    function update() {
+        const bal = localStorage.getItem(BAL_KEY) || "0.00";
+        document.getElementById('bal-display').innerText = "$" + bal;
+        const pend = localStorage.getItem(PEND_KEY);
+        if(pend) {
+            document.getElementById('pending-ui').classList.remove('hidden');
+            document.getElementById('pend-val').innerText = pend;
+        }
+    }
+
+    function openSend() {
+        let bal = parseFloat(localStorage.getItem(BAL_KEY) || 0);
+        let amt = prompt("Amount to send:");
+        if (!amt || parseFloat(amt) > bal) return;
+        localStorage.setItem(PEND_KEY, amt);
+        document.getElementById('dash').classList.add('hidden');
+        document.getElementById('sendView').classList.remove('hidden');
+        const payload = "TIFFY_TX:" + btoa(JSON.stringify({amount: amt, id: Date.now()}));
+        QRCode.toCanvas(document.getElementById('canvas'), payload, {width: 200});
+    }
+
+    function voidTx() {
+        localStorage.removeItem(PEND_KEY);
+        location.reload();
+    }
+
+    function openScan() {
+        document.getElementById('dash').classList.add('hidden');
+        document.getElementById('scanView').classList.remove('hidden');
+        const scanner = new Html5Qrcode("viewfinder");
+        scanner.start({ facingMode: "environment" }, { fps: 15 }, (decoded) => {
+            if(decoded.startsWith("TIFFY_TX:")) {
+                scanner.stop();
+                const data = JSON.parse(atob(decoded.split(":")[1]));
+                let cur = parseFloat(localStorage.getItem(BAL_KEY) || 0);
+                localStorage.setItem(BAL_KEY, (cur + parseFloat(data.amount)).toFixed(2));
+                location.reload();
+            }
+        });
+    }
+
+    update();
+</script>
+</body>
+</html>
