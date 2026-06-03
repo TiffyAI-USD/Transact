@@ -15,8 +15,8 @@
         .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; }
         #qrcode { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; width: 200px !important; height: 200px !important; }
         .viewfinder-wrapper { width: 100%; height: 260px; background: #000; margin: 12px 0; border: 2px dashed var(--glass-border); }
-        .social-share-panel { display: flex; justify-content: space-between; margin-top: 15px; gap: 5px; }
-        .share-btn { flex: 1; background: var(--glass-border); border: none; color: #fff; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 10px; }
+        .share-container { text-align: center; margin-top: 10px; }
+        .share-btn { background: none; border: 1px solid var(--glass-border); color: var(--electric-blue); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -48,11 +48,9 @@
     <div id="pairingView" class="hidden">
         <h2 style="text-align:center; font-size:14px;">SHOW TO RECEIVER</h2>
         <canvas id="qrcode"></canvas>
-        <div class="social-share-panel">
-            <button class="share-btn" onclick="shareTransaction('WhatsApp')">WA</button>
-            <button class="share-btn" onclick="shareTransaction('Instagram')">IG</button>
-            <button class="share-btn" onclick="shareTransaction('Facebook')">FB</button>
-            <button class="share-btn" onclick="shareTransaction('LinkedIn')">LI</button>
+        <div class="share-container">
+            <button class="share-btn" onclick="shareTransaction()">SHARE TRANSACTION 🔗</button>
+            <p style="font-size: 9px; color: #666; margin-top: 10px;">Long press QR to save image</p>
         </div>
         <button class="action-panel-btn" onclick="exitMode()">BACK TO DASHBOARD</button>
     </div>
@@ -72,16 +70,16 @@
         }
     };
 
-    function shareTransaction(platform) {
+    function shareTransaction() {
         const shareData = {
             title: 'Tiffy AI Transaction',
-            text: 'Complete your secure Tiffy AI transaction here:',
-            url: 'https://tiffyai-usd.github.io/Transact/index.html'
+            text: 'Scan my QR code or open this link to complete the transaction:',
+            url: 'https://tiffyai-usd.github.io/Transact/index46.html'
         };
         if (navigator.share) {
             navigator.share(shareData).catch(console.error);
         } else {
-            alert("Copy link to share on " + platform + ": " + shareData.url);
+            alert("Copy this link to share: " + shareData.url);
         }
     }
 
