@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIFFY AI - MASTER NODE</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --blue: #00f0ff; --pink: #ff007f; --bg: #05070a; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .terminal { width: 360px; background: #0a0e14; border: 1px solid #333; padding: 25px; border-radius: 20px; text-align: center; }
+        .btn { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #444; background: #111; color: #fff; cursor: pointer; border-radius: 10px; font-weight: bold; text-transform: uppercase; }
+        .hidden { display: none !important; }
+        #canvas { background: white; padding: 10px; border-radius: 10px; margin: 20px 0; }
+        #viewfinder { width: 100%; height: 260px; background: #000; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="terminal">
+    <div id="dash">
+        <h1>TIFFY NODE</h1>
+        <p>BALANCE: $<span id="balance">0.00</span></p>
+        <div id="pendingArea" class="hidden">
+            <p style="color:var(--pink)">PENDING: $<span id="pendingVal">0</span></p>
+            <button class="btn" onclick="voidTx()">VOID TRANSACTION</button>
+        </div>
+        <button class="btn" onclick="openSend()">SEND ASSET</button>
+        <button class="btn" onclick="openScan()">SCAN & RECEIVE</button>
+    </div>
+
+    <div id="sendView" class="hidden">
+        <canvas id="canvas"></canvas>
+        <button class="btn" onclick="location.reload()">BACK</button>
+    </div>
+
+    <div id="scanView" class="hidden">
+        <div id="viewfinder"></div>
+        <button class="btn" onclick="location.reload()">CANCEL</button>
+    </div>
+</div>
+
+<script>
+    // CORE LOGIC
+    const BAL_KEY = "TUSD_Nitro";
+    const PEND_KEY = "Tiffy_Pending";
+
+    function update() {
+        document.getElementById('balance').innerText = localStorage.getItem(BAL_KEY) || "0.00";
+        const pend = localStorage.getItem(PEND_KEY);
+        if(pend) {
+            document.getElementById('pendingArea').classList.remove('hidden');
+            document.getElementById('pendingVal').innerText = pend;
+        }
+    }
+
+    function openSend() {
+        const amt = prompt("Amount:");
+        if(!amt) return;
+        localStorage.setItem(PEND_KEY, amt);
+        document.getElementById('dash').classList.add('hidden');
+        document.getElementById('sendView').classList.remove('hidden');
+        
+        // Generate QR locally on the fly
+        const payload = "TIFFY_TX:" + btoa(JSON.stringify({amount: amt, id: Date.now()}));
+        QRCode.toCanvas(document.getElementById('canvas'), payload, {width: 200});
+    }
+
+    function voidTx() {
+        localStorage.removeItem(PEND_KEY);
+        location.reload();
+    }
+
+    function openScan() {
+        document.getElementById('dash').classList.add('hidden');
+        document.getElementById('scanView').classList.remove('hidden');
+        
+        const scanner = new Html5Qrcode("viewfinder");
+        scanner.start({ facingMode: "environment" }, { fps: 10 }, (decoded) => {
+            if(decoded.startsWith("TIFFY_TX:")) {
+                scanner.stop();
+                const data = JSON.parse(atob(decoded.split(":")[1]));
+                const cur = parseFloat(localStorage.getItem(BAL_KEY) || 0);
+                localStorage.setItem(BAL_KEY, (cur + parseFloat(data.amount)).toFixed(2));
+                alert("Received $" + data.amount);
+                location.reload();
+            }
+        });
+    }
+
+    update();
+</script>
+</body>
+</html>
