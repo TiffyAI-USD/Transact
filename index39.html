@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIFFY AI - SECURE NODE</title>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        :root { --electric-blue: #00f0ff; --shocking-pink: #ff007f; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
+        body { margin: 0; background: #05070a; font-family: 'Orbitron', sans-serif; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .terminal-frame { background: rgba(10, 15, 24, 0.75); border: 1px solid var(--glass-border); padding: 25px; border-radius: 24px; width: 360px; min-height: 500px; display: flex; flex-direction: column; }
+        .hidden { display: none !important; }
+        .brand-header { font-size: 18px; font-weight: 800; text-align: center; color: var(--electric-blue); margin-bottom: 20px; }
+        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; }
+        #qrcode { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; width: 200px !important; height: 200px !important; }
+        .viewfinder-wrapper { width: 100%; height: 260px; background: #000; margin: 12px 0; border: 2px dashed var(--glass-border); }
+    </style>
+</head>
+<body>
+
+<div class="terminal-frame">
+    <div id="authView">
+        <div class="brand-header">SECURE ACCESS</div>
+        <button class="action-panel-btn" onclick="authenticate()">UNLOCK NODE</button>
+    </div>
+
+    <div id="dashboardView" class="hidden">
+        <div class="brand-header">TIFFY AI NODE</div>
+        <div style="text-align: center; margin: 20px 0;">
+            <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800;">$0.00</div>
+            <p id="pendingOutboundLabel" style="color:var(--shocking-pink); display:none; font-size:10px;">ESCROWED: $<span id="pendingOutboundValue">0.00</span></p>
+        </div>
+        <button class="action-panel-btn" onclick="openTapToPayMode()">SEND ASSET</button>
+        <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
+        
+        <div style="margin-top:20px; border-top:1px solid var(--glass-border); pt:10px;">
+            <button class="action-panel-btn" style="color:var(--electric-blue);">BUY VIA FIAT (GOOGLE/APPLE)</button>
+            <button class="action-panel-btn">BUY VIA CRYPTO</button>
+        </div>
+    </div>
+
+    <div id="pairingView" class="hidden">
+        <h2 style="text-align:center; font-size:14px;">SHOW TO RECEIVER</h2>
+        <canvas id="qrcode"></canvas>
+        <button class="action-panel-btn" style="background:var(--electric-blue); color:#000; font-weight:bold;" onclick="finalizeEscrow()">CONFIRM RECEIPT (FINALIZE)</button>
+        <button class="action-panel-btn" onclick="cancelPendingTransfer()">CANCEL ESCROW</button>
+    </div>
+
+    <div id="scannerView" class="hidden">
+        <div class="viewfinder-wrapper" id="camera-viewfinder"></div>
+        <button class="action-panel-btn" onclick="stopScanner()">CANCEL</button>
+    </div>
+</div>
+
+<script>
+    let activeScanner = null;
+
+    function authenticate() {
+        const pin = prompt("Enter PIN:");
+        if(pin === "1234") { // Simple placeholder PIN
+            document.getElementById('authView').classList.add('hidden');
+            checkPersistence();
+        } else { alert("Access Denied"); }
+    }
+
+    function checkPersistence() {
+        const pending = localStorage.getItem("Tiffy_Pending_Outbound");
+        if(pending) {
+            document.getElementById('pairingView').classList.remove('hidden');
+            QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify({amount: pending})), {width: 200});
+        } else {
+            document.getElementById('dashboardView').classList.remove('hidden');
+            loadBalances();
+        }
+    }
+
+    function loadBalances() {
+        const nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+        const pend = parseFloat(localStorage.getItem("Tiffy_Pending_Outbound") || 0);
+        document.getElementById('totalBalanceDisplay').innerText = "$" + nitro.toFixed(2);
+        const pendUI = document.getElementById('pendingOutboundLabel');
+        if(pend > 0) {
+            pendUI.style.display = "block";
+            document.getElementById('pendingOutboundValue').innerText = pend.toFixed(2);
+        } else { pendUI.style.display = "none"; }
+    }
+
+    function openTapToPayMode() {
+        let amt = prompt("Amount:");
+        if(!amt || isNaN(amt)) return;
+        let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+        if(parseFloat(amt) > bal) { alert("Insufficient Funds."); return; }
+        localStorage.setItem("TUSD_Nitro_Storage", (bal - parseFloat(amt)).toFixed(2));
+        localStorage.setItem("Tiffy_Pending_Outbound", amt);
+        document.getElementById('dashboardView').classList.add('hidden');
+        document.getElementById('pairingView').classList.remove('hidden');
+        QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify({amount: amt})), {width: 200});
+        loadBalances();
+    }
+
+    function finalizeEscrow() { localStorage.removeItem("Tiffy_Pending_Outbound"); alert("Transaction finalized."); exitMode(); }
+    function cancelPendingTransfer() { 
+        let pend = parseFloat(localStorage.getItem("Tiffy_Pending_Outbound") || 0);
+        let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+        localStorage.setItem("TUSD_Nitro_Storage", (bal + pend).toFixed(2));
+        localStorage.removeItem("Tiffy_Pending_Outbound");
+        exitMode();
+    }
+
+    function activateScanner() {
+        document.getElementById('dashboardView').classList.add('hidden');
+        document.getElementById('scannerView').classList.remove('hidden');
+        activeScanner = new Html5Qrcode("camera-viewfinder");
+        activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => {
+            if(data.startsWith("TIFFY_TX:")) {
+                const tx = JSON.parse(atob(data.split(":")[1]));
+                stopScanner();
+                if(confirm("Accept incoming $" + tx.amount + "?")) {
+                    let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+                    localStorage.setItem("TUSD_Nitro_Storage", (bal + parseFloat(tx.amount)).toFixed(2));
+                    alert("Transfer Successful.");
+                    loadBalances();
+                }
+            }
+        });
+    }
+
+    function stopScanner() { if (activeScanner) activeScanner.stop().then(exitMode).catch(exitMode); else exitMode(); }
+    function exitMode() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); loadBalances(); }
+    window.onload = () => {}; // Wait for user to click unlock
+</script>
+</body>
+</html>
