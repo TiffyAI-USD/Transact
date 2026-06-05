@@ -83,17 +83,25 @@
 
 <script>
     let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
-    const CURRENCIES = [
-        {name: "USD", rate: 1.0}, {name: "ZAR", rate: 19.50}, {name: "EUR", rate: 0.92},
-        {name: "NGN", rate: 1500.0}, {name: "INR", rate: 83.0}, {name: "CNY", rate: 7.20},
-        {name: "AUD", rate: 1.50}
-    ];
+    const CURRENCIES = [{name: "USD", rate: 1.0}, {name: "ZAR", rate: 19.50}, {name: "EUR", rate: 0.92}, {name: "NGN", rate: 1500.0}, {name: "INR", rate: 83.0}, {name: "CNY", rate: 7.20}, {name: "AUD", rate: 1.50}];
 
     function initUI() { if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); setActiveAccount('nitro'); }
     function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
     function clearPin() { currentPin = ""; updateDots(); }
     function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
     function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; localStorage.setItem("Tiffy_Pref_Currency", currIdx); loadBalances(); }
+    
+    function setInitialPin() {
+        let pin = prompt("Set your 4-6 digit PIN:");
+        if(pin) {
+            localStorage.setItem("User_Access_PIN", pin);
+            localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + 500).toFixed(2));
+            localStorage.setItem("Tiffy_PIN_Locked", "true");
+            document.getElementById('changePinBtn').classList.add('hidden');
+            alert("PIN Set. $500 Reward Added.");
+            loadBalances();
+        }
+    }
 
     function setActiveAccount(type) {
         activeAccount = type;
@@ -101,6 +109,7 @@
         document.getElementById('box-nitro').classList.toggle('active', type === 'nitro');
         document.getElementById('activeAccountLabel').innerText = type.toUpperCase();
         document.getElementById('collectBtn').classList.toggle('hidden', type !== 'tokens');
+        loadBalances();
     }
 
     function authenticate() {
@@ -117,7 +126,6 @@
         let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
         let rate = CURRENCIES[currIdx].rate;
         let activeVal = (activeAccount === 'tokens' ? tokens : nitro);
-        
         document.getElementById('tokenDisplay').innerText = tokens.toFixed(2);
         document.getElementById('nitroDisplay').innerText = nitro.toFixed(2);
         document.getElementById('totalBalanceDisplay').innerText = (activeVal * rate).toFixed(2) + " " + CURRENCIES[currIdx].name;
