@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TIFFY AI - Ultimate Gateway Terminal</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+    <title>TIFFY AI - SECURE NODE</title>
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
-        :root { --electric-blue: #00f0ff; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
+        :root { --electric-blue: #00f0ff; --shocking-pink: #ff007f; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
         body { margin: 0; background: #05070a; font-family: 'Orbitron', sans-serif; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .terminal-frame { background: rgba(10, 15, 24, 0.75); border: 1px solid var(--glass-border); padding: 25px; border-radius: 24px; width: 360px; max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto; }
         .hidden { display: none !important; }
@@ -19,58 +17,41 @@
         .viewfinder-wrapper { width: 100%; min-height: 260px; background: #000; margin: 12px 0; border: 2px dashed var(--glass-border); }
         .share-container { text-align: center; margin-top: 10px; }
         .share-btn { background: var(--electric-blue); color: #000; border: none; font-weight: bold; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 12px; width: 100%; text-transform: uppercase; }
-        .harvest-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .harvest-box { background: rgba(255,255,255,0.02); border: 2px solid var(--glass-border); border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .harvest-box.active { border-color: var(--electric-blue); background: rgba(0,240,255,0.1); }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: #333; margin: 0 5px; }
-        .dot.active { background: var(--electric-blue); }
-        .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
-        .glass-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: #fff; padding: 15px 0; border-radius: 12px; cursor: pointer; text-align: center; }
     </style>
 </head>
-<body onload="initUI()">
+<body>
 
 <div class="terminal-frame">
     <div id="authView">
         <div class="brand-header">SECURE ACCESS</div>
-        <div style="display:flex; justify-content:center; margin-bottom:15px;"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-        <div class="pin-grid">
-            <button class="glass-btn" onclick="inputPin(1)">1</button><button class="glass-btn" onclick="inputPin(2)">2</button><button class="glass-btn" onclick="inputPin(3)">3</button>
-            <button class="glass-btn" onclick="inputPin(4)">4</button><button class="glass-btn" onclick="inputPin(5)">5</button><button class="glass-btn" onclick="inputPin(6)">6</button>
-            <button class="glass-btn" onclick="inputPin(7)">7</button><button class="glass-btn" onclick="inputPin(8)">8</button><button class="glass-btn" onclick="inputPin(9)">9</button>
-            <button class="glass-btn" onclick="clearPin()">C</button><button class="glass-btn" onclick="inputPin(0)">0</button><button class="glass-btn" onclick="authenticate()">OK</button>
-        </div>
-        <button id="changePinBtn" class="action-panel-btn" onclick="setInitialPin()">CHANGE PIN & GET $500</button>
+        <button class="action-panel-btn" onclick="authenticate()">UNLOCK NODE</button>
+        <button id="changePinBtn" class="action-panel-btn" onclick="setInitialPin()">CHANGE PIN (ONE-TIME)</button>
     </div>
 
     <div id="dashboardView" class="hidden">
-        <div class="brand-header">TIFFY INTERNATIONAL BANK</div>
+        <div class="brand-header">TIFFY AI NODE</div>
         <div style="text-align: center; margin: 20px 0;">
-            <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800; cursor:pointer;" onclick="cycleCurrency()">$0.00 USD</div>
-            
-            <div class="harvest-container">
-                <div class="harvest-box" id="box-tokens" onclick="setActiveAccount('tokens')">
-                    <p style="font-size:8px; color:#888;">TiffyAI tokens</p>
-                    <div id="tokenDisplay" style="font-weight:bold;">0.00</div>
-                </div>
-                <div class="harvest-box" id="box-nitro" onclick="setActiveAccount('nitro')">
-                    <p style="font-size:8px; color:#888;">TUSD NITRO</p>
-                    <div id="nitroDisplay" style="font-weight:bold;">0.00</div>
-                </div>
+            <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800;">$0.00</div>
+            <div id="escrowContainer" style="display:none; margin-top:10px;">
+                <p style="color:var(--shocking-pink); font-size:10px; margin:0;">ESCROWED: $<span id="pendingOutboundValue">0.00</span></p>
+                <button class="action-panel-btn" style="background:var(--electric-blue); color:#000; font-weight:bold; margin-top:10px;" onclick="finalizeEscrow()">CONFIRM RECEIPT (FINALIZE)</button>
+                <button class="action-panel-btn" onclick="cancelPendingTransfer()">CANCEL ESCROW</button>
             </div>
-            <button id="collectBtn" class="action-panel-btn hidden" style="background:var(--electric-blue); color:#000;" onclick="collectEarnings()">COLLECT EARNINGS</button>
         </div>
-        <button class="action-panel-btn" onclick="openTapToPayMode()">SEND <span id="activeAccountLabel">NITRO</span></button>
-        <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
-        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">MENU</button>
+        <div id="mainActions">
+            <button class="action-panel-btn" onclick="openTapToPayMode()">SEND ASSET</button>
+            <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
+            <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">TOP UP YOUR BALANCE</button>
+        </div>
     </div>
 
     <div id="pairingView" class="hidden">
+        <h2 style="text-align:center; font-size:14px;">SHOW TO RECEIVER</h2>
         <canvas id="qrcode"></canvas>
         <div class="share-container">
             <button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button>
         </div>
-        <button class="action-panel-btn" onclick="exitMode()">BACK</button>
+        <button class="action-panel-btn" onclick="exitMode()">BACK TO DASHBOARD</button>
     </div>
 
     <div id="scannerView" class="hidden">
@@ -82,110 +63,137 @@
 </div>
 
 <script>
-    let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
-    window.isProcessing = false;
-    const CURRENCIES = [
-        {name: "USD", rate: 1.0}, {name: "ZAR", rate: 19.50}, {name: "EUR", rate: 0.92},
-        {name: "NGN", rate: 1500.0}, {name: "INR", rate: 83.0}, {name: "CNY", rate: 7.20},
-        {name: "AUD", rate: 1.50}
-    ];
+    let activeScanner = null;
+    let isProcessing = false;
 
-    function initUI() { if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); setActiveAccount('nitro'); }
-    function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
-    function clearPin() { currentPin = ""; updateDots(); }
-    function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
-    function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; localStorage.setItem("Tiffy_Pref_Currency", currIdx); loadBalances(); }
+    window.onload = function() {
+        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") {
+            document.getElementById('changePinBtn').classList.add('hidden');
+        }
+    };
 
-    function setActiveAccount(type) {
-        activeAccount = type;
-        document.getElementById('box-tokens').classList.toggle('active', type === 'tokens');
-        document.getElementById('box-nitro').classList.toggle('active', type === 'nitro');
-        document.getElementById('activeAccountLabel').innerText = type.toUpperCase();
-        document.getElementById('collectBtn').classList.toggle('hidden', type !== 'tokens');
+    async function shareTransaction() {
+        const canvas = document.getElementById('qrcode');
+        const shareText = "Claim your reward: Screenshot this QR, click 'Receive Asset', upload the image, and get $500 in your own sovereign bank! Start now: https://tiffyai-usd.github.io/Transact/index46.html";
+        try {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
+            if (navigator.share) await navigator.share({title: 'Tiffy AI Reward', text: shareText, files: [file]});
+            else alert(shareText);
+        } catch (err) { console.error('Sharing failed', err); }
+    }
+
+    function processQRData(data) {
+        if (isProcessing) return;
+        isProcessing = true;
+        if(data.startsWith("TIFFY_TX:")) {
+            const tx = JSON.parse(atob(data.split(":")[1]));
+            if(confirm("Accept incoming $" + tx.amount + "?")) {
+                let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+                localStorage.setItem("TUSD_Nitro_Storage", (bal + parseFloat(tx.amount)).toFixed(2));
+                alert("Transfer Successful.");
+                loadBalances();
+            }
+        }
+        isProcessing = false;
+    }
+
+    async function handleFileUpload(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        const scanner = new Html5Qrcode("camera-viewfinder");
+        try {
+            const data = await scanner.scanFile(file, true);
+            stopScanner();
+            processQRData(data);
+        } catch (err) { 
+            alert("Could not scan QR from image."); 
+        } finally {
+            e.target.value = '';
+            scanner.clear();
+        }
     }
 
     function authenticate() {
-        const savedPin = localStorage.getItem("User_Access_PIN") || "1234";
-        if(currentPin === savedPin) {
+        const savedPin = localStorage.getItem("Tiffy_User_PIN") || "1234";
+        const pin = prompt("Enter PIN:");
+        if(pin === savedPin) {
             document.getElementById('authView').classList.add('hidden');
             document.getElementById('dashboardView').classList.remove('hidden');
             loadBalances();
-        } else { alert("Access Denied"); clearPin(); }
+        } else { alert("Access Denied"); }
+    }
+
+    function setInitialPin() {
+        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") return;
+        const current = prompt("Verify Old PIN (Default is 1234):");
+        if(current === "1234") {
+            const newPin = prompt("Enter New Unique PIN:");
+            if(newPin && newPin.length >= 4) {
+                localStorage.setItem("Tiffy_User_PIN", newPin);
+                localStorage.setItem("Tiffy_PIN_Locked", "true");
+                document.getElementById('changePinBtn').classList.add('hidden');
+                alert("PIN Set Successfully.");
+            }
+        } else { alert("Verification Failed."); }
     }
 
     function loadBalances() {
-        let tokens = parseFloat(localStorage.getItem("tetrusScore") || "0.00");
-        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
-        let rate = CURRENCIES[currIdx].rate;
-        let activeVal = (activeAccount === 'tokens' ? tokens : nitro);
-        
-        document.getElementById('tokenDisplay').innerText = tokens.toFixed(2);
-        document.getElementById('nitroDisplay').innerText = nitro.toFixed(2);
-        document.getElementById('totalBalanceDisplay').innerText = (activeVal * rate).toFixed(2) + " " + CURRENCIES[currIdx].name;
-    }
-
-    function collectEarnings() {
-        let utility = parseFloat(localStorage.getItem("tetrusScore") || "0.00");
-        if (utility > 0) {
-            localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + (utility * 20)).toFixed(2));
-            localStorage.setItem("tetrusScore", "0.00");
-            loadBalances();
-        }
+        const nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+        const pend = parseFloat(localStorage.getItem("Tiffy_Pending_Outbound") || 0);
+        document.getElementById('totalBalanceDisplay').innerText = "$" + nitro.toFixed(2);
+        const escContainer = document.getElementById('escrowContainer');
+        if(pend > 0) {
+            escContainer.style.display = "block";
+            document.getElementById('pendingOutboundValue').innerText = pend.toFixed(2);
+        } else { escContainer.style.display = "none"; }
     }
 
     function openTapToPayMode() {
         let amt = prompt("Amount:");
-        if(!amt) return;
+        if(!amt || isNaN(amt)) return;
+        let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+        if(parseFloat(amt) > bal) { alert("Insufficient Funds."); return; }
+        
+        localStorage.setItem("TUSD_Nitro_Storage", (bal - parseFloat(amt)).toFixed(2));
+        localStorage.setItem("Tiffy_Pending_Outbound", amt);
+        
         document.getElementById('dashboardView').classList.add('hidden');
         document.getElementById('pairingView').classList.remove('hidden');
-        QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify({amount: amt, asset: activeAccount})));
+        QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify({amount: amt})), {width: 200});
     }
 
-    async function shareTransaction() {
-        const canvas = document.getElementById('qrcode');
-        const shareText = "Claim your reward: https://tiffyai-usd.github.io/Transact/index46.html";
-        try {
-            const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-            const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
-            if (navigator.share) await navigator.share({title: 'Tiffy AI', text: shareText, files: [file]});
-            else alert(shareText);
-        } catch (e) { alert(shareText); }
+    function finalizeEscrow() { 
+        localStorage.removeItem("Tiffy_Pending_Outbound"); 
+        alert("Transaction finalized."); 
+        loadBalances();
     }
 
-    function processQRData(data) {
-        if (!data || window.isProcessing) return;
-        window.isProcessing = true;
-
-        if(data.startsWith("TIFFY_TX:")) {
-            try {
-                const tx = JSON.parse(atob(data.split(":")[1]));
-                const key = tx.asset === 'tokens' ? "tetrusScore" : "TUSD_Nitro_Storage";
-                localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
-                loadBalances();
-                alert("Transfer Received: " + tx.amount + " " + (tx.asset || "Nitro"));
-            } catch(e) { alert("Invalid Code"); }
-        }
-        
-        window.isProcessing = false;
-        stopScanner();
-    }
-
-    function handleFileUpload(e) {
-        const file = e.target.files[0];
-        if(!file) return;
-        const scanner = new Html5Qrcode("camera-viewfinder");
-        scanner.scanFile(file, true).then(data => { e.target.value = ''; processQRData(data); }).catch(() => { e.target.value = ''; alert("Error processing QR"); });
+    function cancelPendingTransfer() { 
+        let pend = parseFloat(localStorage.getItem("Tiffy_Pending_Outbound") || 0);
+        let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+        localStorage.setItem("TUSD_Nitro_Storage", (bal + pend).toFixed(2));
+        localStorage.removeItem("Tiffy_Pending_Outbound");
+        loadBalances(); 
     }
 
     function activateScanner() {
         document.getElementById('dashboardView').classList.add('hidden');
         document.getElementById('scannerView').classList.remove('hidden');
         activeScanner = new Html5Qrcode("camera-viewfinder");
-        activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => { stopScanner(); processQRData(data); });
+        activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => {
+            stopScanner();
+            processQRData(data);
+        });
     }
 
-    function stopScanner() { if(activeScanner) activeScanner.stop().then(exitMode).catch(exitMode); else exitMode(); }
-    function exitMode() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); loadBalances(); }
+    function stopScanner() { if (activeScanner) activeScanner.stop().then(exitMode).catch(exitMode); else exitMode(); }
+    function exitMode() { 
+        document.getElementById('pairingView').classList.add('hidden'); 
+        document.getElementById('scannerView').classList.add('hidden'); 
+        document.getElementById('dashboardView').classList.remove('hidden'); 
+        loadBalances(); 
+    }
 </script>
 </body>
 </html>
