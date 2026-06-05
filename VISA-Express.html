@@ -13,9 +13,9 @@
         .terminal-frame { background: rgba(10, 15, 24, 0.75); border: 1px solid var(--glass-border); padding: 25px; border-radius: 24px; width: 360px; max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto; }
         .hidden { display: none !important; }
         .brand-header { font-size: 18px; font-weight: 800; text-align: center; color: var(--electric-blue); margin-bottom: 20px; }
-        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; }
+        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; font-family: 'Orbitron', sans-serif; }
         .harvest-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .harvest-box { background: rgba(255,255,255,0.02); border: 2px solid var(--glass-border); border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; }
+        .harvest-box { background: rgba(255,255,255,0.02); border: 2px solid var(--glass-border); border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
         .harvest-box.active { border-color: var(--electric-blue); background: rgba(0,240,255,0.1); }
         #qrcode { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; width: 200px !important; height: 200px !important; }
         .viewfinder-wrapper { width: 100%; min-height: 260px; background: #000; margin: 12px 0; border: 2px dashed var(--glass-border); }
@@ -26,9 +26,7 @@
 <div class="terminal-frame">
     <div id="authView">
         <div class="brand-header">SECURE ACCESS</div>
-        <div class="pin-grid">
-            <button class="action-panel-btn" onclick="authenticate()">UNLOCK TERMINAL</button>
-        </div>
+        <button class="action-panel-btn" onclick="authenticate()">UNLOCK TERMINAL</button>
     </div>
 
     <div id="dashboardView" class="hidden">
@@ -78,7 +76,7 @@
     let currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
     const CURRENCIES = [{name: "USD", rate: 1.0}, {name: "ZAR", rate: 19.50}, {name: "EUR", rate: 0.92}];
 
-    function initUI() { setActiveAccount('nitro'); }
+    function initUI() { setActiveAccount('nitro'); loadBalances(); }
 
     function setActiveAccount(type) {
         activeAccount = type;
@@ -118,29 +116,6 @@
         loadBalances();
     }
 
-    async function handleFileUpload(e) {
-        const file = e.target.files[0];
-        if(!file) return;
-        const scanner = new Html5Qrcode("camera-viewfinder");
-        try {
-            const data = await scanner.scanFile(file, true);
-            processQRData(data);
-        } finally { e.target.value = ''; scanner.clear(); }
-    }
-
-    function stopScanner() { 
-        if(activeScanner) { activeScanner.stop().then(exitMode).catch(exitMode); } 
-        else { exitMode(); }
-    }
-
-    function exitMode() {
-        window.isProcessing = false;
-        document.getElementById('pairingView').classList.add('hidden');
-        document.getElementById('scannerView').classList.add('hidden');
-        document.getElementById('dashboardView').classList.remove('hidden');
-        loadBalances();
-    }
-
     function loadBalances() {
         let tokens = parseFloat(localStorage.getItem("tetrusScore") || "0.00");
         let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
@@ -158,8 +133,14 @@
         let activeVal = (activeAccount === 'tokens' ? tokens : nitro);
         document.getElementById('totalBalanceDisplay').innerText = (activeVal * CURRENCIES[currIdx].rate).toFixed(2) + " " + CURRENCIES[currIdx].name;
     }
+
+    function cycleCurrency() {
+        currIdx = (currIdx + 1) % CURRENCIES.length;
+        localStorage.setItem("Tiffy_Pref_Currency", currIdx);
+        loadBalances();
+    }
     
-    // Auth, CycleCurrency, etc... same logic as before.
+    // ... [Add your remaining logic for authenticate, openTapToPayMode, etc.]
 </script>
 </body>
 </html>
