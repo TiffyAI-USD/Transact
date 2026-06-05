@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIFFY AI - Ultimate Gateway Terminal</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        :root { --electric-blue: #00f0ff; --shocking-pink: #ff007f; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
+        
+        /* Dynamic Background */
+        body { 
+            margin: 0; background: #05070a; font-family: 'Orbitron', sans-serif; color: #fff; 
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.05) 0%, transparent 70%);
+        }
+        
+        .terminal-frame { 
+            background: rgba(10, 15, 24, 0.85); border: 1px solid var(--glass-border); 
+            padding: 25px; border-radius: 24px; width: 360px; max-height: 90vh; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,240,255,0.05);
+            display: flex; flex-direction: column; overflow-y: auto;
+        }
+
+        /* [KEEP YOUR PREVIOUS CSS FROM HERE DOWNWARD] */
+        .hidden { display: none !important; }
+        .brand-header { font-size: 18px; font-weight: 800; text-align: center; color: var(--electric-blue); margin-bottom: 20px; }
+        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--shocking-pink); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; font-family: 'Orbitron', sans-serif; transition: 0.3s; }
+        .action-panel-btn:hover { background: var(--shocking-pink); }
+        #qrcode { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; width: 200px !important; height: 200px !important; }
+        .viewfinder-wrapper { width: 100%; min-height: 260px; background: #000; margin: 12px 0; border: 2px dashed var(--shocking-pink); }
+        .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+        .glass-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: #fff; padding: 15px 0; border-radius: 12px; cursor: pointer; text-align: center; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #333; margin: 0 5px; }
+        .dot.active { background: var(--electric-blue); box-shadow: 0 0 10px var(--electric-blue); }
+    </style>
+</head>
+<body>
+
+<audio id="snd-click" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+<audio id="snd-success" src="https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3" preload="auto"></audio>
+
+<div class="terminal-frame">
+    <div id="authView">
+        <div class="brand-header">SECURE ACCESS</div>
+        <div style="display:flex; justify-content:center; margin-bottom:15px;"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="pin-grid">
+            <button class="glass-btn" onclick="inputPin(1); playSnd('click')">1</button>
+            <button class="glass-btn" onclick="inputPin(2); playSnd('click')">2</button>
+            <button class="glass-btn" onclick="inputPin(3); playSnd('click')">3</button>
+            <button class="glass-btn" onclick="inputPin(4); playSnd('click')">4</button>
+            <button class="glass-btn" onclick="inputPin(5); playSnd('click')">5</button>
+            <button class="glass-btn" onclick="inputPin(6); playSnd('click')">6</button>
+            <button class="glass-btn" onclick="inputPin(7); playSnd('click')">7</button>
+            <button class="glass-btn" onclick="inputPin(8); playSnd('click')">8</button>
+            <button class="glass-btn" onclick="inputPin(9); playSnd('click')">9</button>
+            <button class="glass-btn" onclick="clearPin(); playSnd('click')">C</button>
+            <button class="glass-btn" onclick="inputPin(0); playSnd('click')">0</button>
+            <button class="glass-btn" onclick="authenticate(); playSnd('success')">OK</button>
+        </div>
+    </div>
+    </div>
+
+<script>
+    // Audio Controller
+    function playSnd(type) {
+        const s = document.getElementById(type === 'success' ? 'snd-success' : 'snd-click');
+        s.currentTime = 0;
+        s.play().catch(e => console.log("User interaction required for audio"));
+    }
+
+    // Your existing logic continues here...
+    let activeScanner = null, currentPin = "";
+    // ... [Copy your existing functions here]
+</script>
+</body>
+</html>
