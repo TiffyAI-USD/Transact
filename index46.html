@@ -10,8 +10,8 @@
     <meta property="og:url" content="https://tiffyai-usd.github.io/Transact/index46.html">
     <meta property="og:type" content="website">
 
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
     <script src="tiffy-engines.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
@@ -31,6 +31,9 @@
         .glass-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: #fff; padding: 15px 0; border-radius: 12px; cursor: pointer; text-align: center; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #333; margin: 0 5px; }
         .dot.active { background: var(--electric-blue); }
+        /* Added styles for the conversion display */
+        .harvest-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .harvest-box { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px; text-align: center; }
     </style>
 </head>
 <body>
@@ -61,6 +64,18 @@
         <div class="brand-header">TIFFY INTERNATIONAL BANK</div>
         <div style="text-align: center; margin: 20px 0;">
             <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800;">$0.00</div>
+            <div class="harvest-container">
+                <div class="harvest-box">
+                    <p style="font-size:8px; color:#888;">HARVESTED UTILITY</p>
+                    <div id="tokenDisplay" style="font-weight:bold;">0.00</div>
+                </div>
+                <div class="harvest-box">
+                    <p style="font-size:8px; color:#888;">TUSD NITRO (20x)</p>
+                    <div id="conversionDisplay" style="font-weight:bold;">0.00</div>
+                </div>
+            </div>
+            <button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="collectEarnings()">COLLECT EARNINGS</button>
+            
             <div id="escrowContainer" style="display:none; margin-top:10px;">
                 <p style="color:var(--shocking-pink); font-size:10px; margin:0;">ESCROWED: $<span id="pendingOutboundValue">0.00</span></p>
                 <button class="action-panel-btn" style="background:var(--electric-blue); color:#000; font-weight:bold;" onclick="finalizeEscrow()">CONFIRM RECEIPT</button>
@@ -69,7 +84,6 @@
         </div>
         <button class="action-panel-btn" onclick="openTapToPayMode()">SEND ASSET</button>
         <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
-        <button class="action-panel-btn" style="border-color:var(--electric-blue);" onclick="harvestAndRecollect()">RECOLLECT HARVEST</button>
         <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">TOP UP BALANCE</button>
     </div>
 
@@ -120,6 +134,14 @@
     }
 
     function loadBalances() {
+        let gameTokens = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+            let key = localStorage.key(i);
+            if (key.includes('Tetrus') || key.includes('Tiffy')) gameTokens += parseFloat(localStorage.getItem(key)) || 0;
+        }
+        document.getElementById('tokenDisplay').innerText = gameTokens.toFixed(2);
+        document.getElementById('conversionDisplay').innerText = (gameTokens * 20).toFixed(2);
+
         const nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
         const pend = parseFloat(localStorage.getItem("Tiffy_Pending_Outbound") || 0);
         document.getElementById('totalBalanceDisplay').innerText = "$" + nitro.toFixed(2);
@@ -127,19 +149,23 @@
         document.getElementById('pendingOutboundValue').innerText = pend.toFixed(2);
     }
 
-    function harvestAndRecollect() {
-        let total = 0;
-        for(let i=0; i<localStorage.length; i++) {
-            let k = localStorage.key(i);
-            if(k.toLowerCase().includes('tetrus') || k.toLowerCase().includes('tiffy')) {
-                total += parseFloat(localStorage.getItem(k)) || 0;
-                localStorage.setItem(k, "0.00");
+    function collectEarnings() {
+        let tokens = 0;
+        let keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            let key = localStorage.key(i);
+            if (key.includes('Tetrus') || key.includes('Tiffy')) {
+                tokens += parseFloat(localStorage.getItem(key)) || 0;
+                keysToRemove.push(key);
             }
         }
-        let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
-        localStorage.setItem("TUSD_Nitro_Storage", (bal + total).toFixed(2));
-        alert("Collected: $" + total.toFixed(2));
-        loadBalances();
+        if (tokens > 0) {
+            let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+            localStorage.setItem("TUSD_Nitro_Storage", (bal + (tokens * 20)).toFixed(2));
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+            alert("Earnings collected!");
+            loadBalances();
+        }
     }
 
     function finalizeEscrow() { localStorage.removeItem("Tiffy_Pending_Outbound"); loadBalances(); }
