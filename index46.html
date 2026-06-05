@@ -133,7 +133,6 @@
 
     function loadBalances() {
         let gameTokens = 0;
-        // Looking specifically for keys with these strings as you requested
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
             if (key.includes('Tetrus') || key.includes('Tiffy')) {
