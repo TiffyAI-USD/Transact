@@ -101,7 +101,6 @@
 
 <script>
     let activeScanner = null, currentPin = "";
-    const SYSTEM_KEYS = ["TUSD_Nitro_Storage", "Tiffy_User_PIN", "Tiffy_PIN_Locked", "Tiffy_Pending_Outbound"];
     
     function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
     function clearPin() { currentPin = ""; updateDots(); }
@@ -136,8 +135,10 @@
         let gameTokens = 0;
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
-            if (!SYSTEM_KEYS.includes(key)) {
-                gameTokens += parseFloat(localStorage.getItem(key)) || 0;
+            // Strictly target relevant keys to prevent calculation bloat
+            if (key.includes('Tetrus') || key.includes('Tiffy')) {
+                let val = parseFloat(localStorage.getItem(key));
+                if (!isNaN(val)) gameTokens += val;
             }
         }
         document.getElementById('tokenDisplay').innerText = gameTokens.toFixed(2);
@@ -155,16 +156,19 @@
         let keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
-            if (!SYSTEM_KEYS.includes(key)) {
-                tokens += parseFloat(localStorage.getItem(key)) || 0;
-                keysToRemove.push(key);
+            if (key.includes('Tetrus') || key.includes('Tiffy')) {
+                let val = parseFloat(localStorage.getItem(key));
+                if (!isNaN(val)) {
+                    tokens += val;
+                    keysToRemove.push(key);
+                }
             }
         }
         if (tokens > 0) {
             let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
             localStorage.setItem("TUSD_Nitro_Storage", (bal + (tokens * 20)).toFixed(2));
             keysToRemove.forEach(k => localStorage.removeItem(k));
-            alert("Earnings collected and converted!");
+            alert("Earnings collected!");
             loadBalances();
         } else {
             alert("No tokens to collect.");
