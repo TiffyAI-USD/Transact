@@ -136,7 +136,7 @@
         document.getElementById('tokenDisplay').innerText = gameTokens.toFixed(2);
         document.getElementById('conversionDisplay').innerText = (gameTokens * 20).toFixed(2);
 
-        const nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 1450.00);
+        const nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 500.00);
         document.getElementById('totalBalanceDisplay').innerText = "$" + nitro.toFixed(2);
     }
 
@@ -151,7 +151,7 @@
             }
         }
         if (tokens > 0) {
-            let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 1450.00);
+            let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 500.00);
             localStorage.setItem("TUSD_Nitro_Storage", (bal + (tokens * 20)).toFixed(2));
             keysToRemove.forEach(k => localStorage.removeItem(k));
             alert("Earnings collected!");
@@ -190,7 +190,7 @@
     function processQRData(data) {
         if(data.startsWith("TIFFY_TX:")) {
             const tx = JSON.parse(atob(data.split(":")[1]));
-            let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 1450.00);
+            let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 500.00);
             localStorage.setItem("TUSD_Nitro_Storage", (bal + parseFloat(tx.amount)).toFixed(2));
             loadBalances();
         }
