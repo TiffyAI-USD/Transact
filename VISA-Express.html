@@ -58,11 +58,11 @@
                     <div id="nitroDisplay" style="font-weight:bold;">0.00</div>
                 </div>
             </div>
-            <button id="collectBtn" class="action-panel-btn hidden" style="background:var(--electric-blue); color:#000;" onclick="collectEarnings()">COLLECT EARNINGS</button>
+            <button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="collectEarnings()">COLLECT EARNINGS</button>
         </div>
         <button class="action-panel-btn" onclick="openTapToPayMode()">SEND <span id="activeAccountLabel">NITRO</span></button>
         <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
-        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">MENU</button>
+        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">TOP UP BALANCE</button>
     </div>
 
     <div id="pairingView" class="hidden">
@@ -82,7 +82,7 @@
 </div>
 
 <script>
-    let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
+    let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = 0;
     const CURRENCIES = [
         {name: "USD", rate: 1.0}, {name: "ZAR", rate: 19.50}, {name: "EUR", rate: 0.92},
         {name: "NGN", rate: 1500.0}, {name: "INR", rate: 83.0}, {name: "CNY", rate: 7.20},
@@ -93,14 +93,13 @@
     function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
     function clearPin() { currentPin = ""; updateDots(); }
     function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
-    function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; localStorage.setItem("Tiffy_Pref_Currency", currIdx); loadBalances(); }
+    function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; loadBalances(); }
 
     function setActiveAccount(type) {
         activeAccount = type;
         document.getElementById('box-tokens').classList.toggle('active', type === 'tokens');
         document.getElementById('box-nitro').classList.toggle('active', type === 'nitro');
         document.getElementById('activeAccountLabel').innerText = type.toUpperCase();
-        document.getElementById('collectBtn').classList.toggle('hidden', type !== 'tokens');
     }
 
     function authenticate() {
@@ -142,7 +141,7 @@
 
     async function shareTransaction() {
         const canvas = document.getElementById('qrcode');
-        const shareText = "Claim your reward: https://tiffyai-usd.github.io/Transact/index46.html";
+        const shareText = "Claim your reward: Screenshot this QR, click 'Receive Asset', upload the image, and get $500 in your own sovereign bank! Start now: https://tiffyai-usd.github.io/Transact/index46.html";
         try {
             const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
             const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
