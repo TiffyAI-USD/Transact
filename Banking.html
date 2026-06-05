@@ -14,7 +14,7 @@
         .terminal-frame { background: rgba(10, 15, 24, 0.75); border: 1px solid var(--glass-border); padding: 25px; border-radius: 24px; width: 360px; max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto; }
         .hidden { display: none !important; }
         .brand-header { font-size: 18px; font-weight: 800; text-align: center; color: var(--electric-blue); margin-bottom: 20px; }
-        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; }
+        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; font-family: 'Orbitron', sans-serif; }
         #qrcode { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; width: 200px !important; height: 200px !important; }
         .viewfinder-wrapper { width: 100%; min-height: 260px; background: #000; margin: 12px 0; border: 2px dashed var(--glass-border); }
         .share-container { text-align: center; margin-top: 10px; }
@@ -25,6 +25,8 @@
         .dot.active { background: var(--electric-blue); }
         .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
         .glass-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: #fff; padding: 15px 0; border-radius: 12px; cursor: pointer; text-align: center; }
+        /* Slider Styling */
+        input[type=range] { width: 100%; margin-top: 15px; accent-color: var(--electric-blue); }
     </style>
 </head>
 <body onload="initUI()">
@@ -46,6 +48,9 @@
         <div class="brand-header">TIFFY INTERNATIONAL BANK</div>
         <div style="text-align: center; margin: 20px 0;">
             <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800;">$0.00</div>
+            <div id="currencyLabel" style="color:var(--electric-blue); font-size:12px;">CURRENCY: USD</div>
+            <input type="range" id="currencySlider" min="0" max="8" value="0" oninput="updateCurrencyDisplay()">
+            
             <div class="harvest-container">
                 <div class="harvest-box">
                     <p style="font-size:8px; color:#888;">TiffyAI tokens</p>
@@ -60,6 +65,7 @@
         </div>
         <button class="action-panel-btn" onclick="openTapToPayMode()">SEND ASSET</button>
         <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
+        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai.github.io/Dream-Menu/'">TOP UP BALANCE</button>
     </div>
 
     <div id="pairingView" class="hidden">
@@ -78,12 +84,17 @@
 
 <script>
     let activeScanner = null, currentPin = "";
+    const CURRENCIES = [
+        {name: "USD", rate: 1.0}, {name: "ZAR", rate: 19.50}, {name: "EUR", rate: 0.92},
+        {name: "NGN", rate: 1500.0}, {name: "INR", rate: 83.0}, {name: "CNY", rate: 7.20},
+        {name: "AUD", rate: 1.50}, {name: "GBP", rate: 0.79}, {name: "JPY", rate: 155.0}
+    ];
 
     function initUI() { if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); }
     function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
     function clearPin() { currentPin = ""; updateDots(); }
     function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
-
+    
     function authenticate() {
         const savedPin = localStorage.getItem("User_Access_PIN") || "1234";
         if(currentPin === savedPin) {
@@ -109,12 +120,20 @@
         }
     }
 
+    function updateCurrencyDisplay() {
+        const index = document.getElementById('currencySlider').value;
+        const curr = CURRENCIES[index];
+        const bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
+        document.getElementById('totalBalanceDisplay').innerText = (bal * curr.rate).toFixed(2) + " " + curr.name;
+        document.getElementById('currencyLabel').innerText = "CURRENCY: " + curr.name;
+    }
+
     function loadBalances() {
         let utility = parseFloat(localStorage.getItem("tetrusScore") || "0.00");
         let balance = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
         document.getElementById('tokenDisplay').innerText = utility.toFixed(2);
         document.getElementById('conversionDisplay').innerText = (utility * 20).toFixed(2);
-        document.getElementById('totalBalanceDisplay').innerText = "$" + balance.toFixed(2);
+        updateCurrencyDisplay();
     }
 
     function collectEarnings() {
@@ -124,7 +143,6 @@
             localStorage.setItem("TUSD_Nitro_Storage", (balance + (utility * 20)).toFixed(2));
             localStorage.setItem("tetrusScore", "0.00");
             loadBalances();
-            alert("Tokens collected!");
         }
     }
 
@@ -140,10 +158,7 @@
         const file = e.target.files[0];
         if(!file) return;
         const scanner = new Html5Qrcode("camera-viewfinder");
-        scanner.scanFile(file, true).then(data => {
-            e.target.value = '';
-            processQRData(data);
-        }).catch(err => alert("Could not detect Tiffy QR in image."));
+        scanner.scanFile(file, true).then(data => { e.target.value = ''; processQRData(data); }).catch(err => alert("Could not detect Tiffy QR."));
     }
 
     function processQRData(data) {
@@ -153,7 +168,6 @@
                 let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
                 localStorage.setItem("TUSD_Nitro_Storage", (bal + parseFloat(tx.amount)).toFixed(2));
                 loadBalances();
-                alert("Transfer Received!");
             } catch(e) { alert("Invalid Code"); }
         }
         stopScanner();
