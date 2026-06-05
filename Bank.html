@@ -77,7 +77,6 @@
         <button class="action-panel-btn" onclick="openTapToPayMode()">SEND ASSET</button>
         <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
         <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">TOP UP BALANCE</button>
-        <button class="action-panel-btn" onclick="localStorage.setItem('Tiffy_Harvest_Pending', '0'); loadBalances();">RESET HARVEST</button>
     </div>
 
     <div id="pairingView" class="hidden">
@@ -128,10 +127,8 @@
     }
 
     function loadBalances() {
-        // STRICT WHITELISTED KEYS: Never search or loop.
         let utility = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
         let balance = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
-        
         document.getElementById('tokenDisplay').innerText = utility.toFixed(2);
         document.getElementById('conversionDisplay').innerText = (utility * 20).toFixed(2);
         document.getElementById('totalBalanceDisplay').innerText = "$" + balance.toFixed(2);
