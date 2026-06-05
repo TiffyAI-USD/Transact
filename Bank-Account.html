@@ -67,6 +67,9 @@
 
     <div id="pairingView" class="hidden">
         <canvas id="qrcode"></canvas>
+        <div class="share-container">
+            <button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button>
+        </div>
         <button class="action-panel-btn" onclick="exitMode()">BACK</button>
     </div>
 
@@ -136,6 +139,17 @@
         QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify({amount: amt, asset: activeAccount})));
     }
 
+    async function shareTransaction() {
+        const canvas = document.getElementById('qrcode');
+        const shareText = "Claim your reward: Screenshot this QR, click 'Receive Asset', upload the image, and get $500 in your own sovereign bank! Start now: https://tiffyai-usd.github.io/Transact/index46.html";
+        try {
+            const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+            const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
+            if (navigator.share) await navigator.share({title: 'Tiffy AI', text: shareText, files: [file]});
+            else alert(shareText);
+        } catch (e) { alert(shareText); }
+    }
+
     function processQRData(data) {
         if(data.startsWith("TIFFY_TX:")) {
             try {
@@ -143,7 +157,7 @@
                 const key = tx.asset === 'tokens' ? "tetrusScore" : "TUSD_Nitro_Storage";
                 localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
                 loadBalances();
-                alert("Received " + tx.amount + " " + tx.asset);
+                alert("Received " + tx.amount + " " + (tx.asset || "Nitro"));
             } catch(e) { alert("Invalid Code"); }
         }
         stopScanner();
