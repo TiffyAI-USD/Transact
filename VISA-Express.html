@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
-        :root { --electric-blue: #00f0ff; --shocking-pink: #ff007f; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
+        :root { --electric-blue: #00f0ff; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
         body { margin: 0; background: #05070a; font-family: 'Orbitron', sans-serif; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .terminal-frame { background: rgba(10, 15, 24, 0.75); border: 1px solid var(--glass-border); padding: 25px; border-radius: 24px; width: 360px; max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto; }
         .hidden { display: none !important; }
@@ -83,6 +83,7 @@
 
 <script>
     let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
+    window.isProcessing = false;
     const CURRENCIES = [
         {name: "USD", rate: 1.0}, {name: "ZAR", rate: 19.50}, {name: "EUR", rate: 0.92},
         {name: "NGN", rate: 1500.0}, {name: "INR", rate: 83.0}, {name: "CNY", rate: 7.20},
@@ -152,15 +153,20 @@
     }
 
     function processQRData(data) {
+        if (!data || window.isProcessing) return;
+        window.isProcessing = true;
+
         if(data.startsWith("TIFFY_TX:")) {
             try {
                 const tx = JSON.parse(atob(data.split(":")[1]));
                 const key = tx.asset === 'tokens' ? "tetrusScore" : "TUSD_Nitro_Storage";
                 localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
                 loadBalances();
-                alert("Received " + tx.amount + " " + (tx.asset || "Nitro"));
+                alert("Transfer Received: " + tx.amount + " " + (tx.asset || "Nitro"));
             } catch(e) { alert("Invalid Code"); }
         }
+        
+        window.isProcessing = false;
         stopScanner();
     }
 
@@ -168,7 +174,7 @@
         const file = e.target.files[0];
         if(!file) return;
         const scanner = new Html5Qrcode("camera-viewfinder");
-        scanner.scanFile(file, true).then(data => { e.target.value = ''; processQRData(data); }).catch(() => alert("Error"));
+        scanner.scanFile(file, true).then(data => { e.target.value = ''; processQRData(data); }).catch(() => { e.target.value = ''; alert("Error processing QR"); });
     }
 
     function activateScanner() {
