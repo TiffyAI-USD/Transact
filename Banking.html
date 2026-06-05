@@ -25,7 +25,6 @@
         .dot.active { background: var(--electric-blue); }
         .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
         .glass-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: #fff; padding: 15px 0; border-radius: 12px; cursor: pointer; text-align: center; }
-        /* Slider Styling */
         input[type=range] { width: 100%; margin-top: 15px; accent-color: var(--electric-blue); }
     </style>
 </head>
@@ -65,7 +64,7 @@
         </div>
         <button class="action-panel-btn" onclick="openTapToPayMode()">SEND ASSET</button>
         <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
-        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai.github.io/Dream-Menu/'">TOP UP BALANCE</button>
+        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">TOP UP BALANCE</button>
     </div>
 
     <div id="pairingView" class="hidden">
@@ -143,6 +142,7 @@
             localStorage.setItem("TUSD_Nitro_Storage", (balance + (utility * 20)).toFixed(2));
             localStorage.setItem("tetrusScore", "0.00");
             loadBalances();
+            alert("Tokens collected!");
         }
     }
 
@@ -158,7 +158,10 @@
         const file = e.target.files[0];
         if(!file) return;
         const scanner = new Html5Qrcode("camera-viewfinder");
-        scanner.scanFile(file, true).then(data => { e.target.value = ''; processQRData(data); }).catch(err => alert("Could not detect Tiffy QR."));
+        scanner.scanFile(file, true).then(data => {
+            e.target.value = '';
+            processQRData(data);
+        }).catch(err => alert("Could not detect Tiffy QR in image."));
     }
 
     function processQRData(data) {
@@ -168,6 +171,7 @@
                 let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
                 localStorage.setItem("TUSD_Nitro_Storage", (bal + parseFloat(tx.amount)).toFixed(2));
                 loadBalances();
+                alert("Transfer Received: $" + tx.amount);
             } catch(e) { alert("Invalid Code"); }
         }
         stopScanner();
