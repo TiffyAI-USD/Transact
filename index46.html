@@ -133,14 +133,14 @@
 
     function loadBalances() {
         let gameTokens = 0;
+        // Looking specifically for keys with these strings as you requested
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
-            // Strictly target relevant keys to prevent calculation bloat
             if (key.includes('Tetrus') || key.includes('Tiffy')) {
-                let val = parseFloat(localStorage.getItem(key));
-                if (!isNaN(val)) gameTokens += val;
+                gameTokens += parseFloat(localStorage.getItem(key)) || 0;
             }
         }
+        
         document.getElementById('tokenDisplay').innerText = gameTokens.toFixed(2);
         document.getElementById('conversionDisplay').innerText = (gameTokens * 20).toFixed(2);
 
@@ -157,11 +157,8 @@
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
             if (key.includes('Tetrus') || key.includes('Tiffy')) {
-                let val = parseFloat(localStorage.getItem(key));
-                if (!isNaN(val)) {
-                    tokens += val;
-                    keysToRemove.push(key);
-                }
+                tokens += parseFloat(localStorage.getItem(key)) || 0;
+                keysToRemove.push(key);
             }
         }
         if (tokens > 0) {
