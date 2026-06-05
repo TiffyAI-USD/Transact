@@ -3,29 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TIFFY AI - SECURE INTERNATIONAL BANK</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+    <title>TIFFY AI - SECURE BANKING</title>
+    
+    <meta property="og:title" content="TIFFY AI - SECURE INTERNATIONAL BANK">
+    <meta property="og:description" content="Claim your $500 reward: Use Default PIN Code 1234, change the default pin, make it yours and get $500 in your own sovereign bank to buy and sell anything!">
+    <meta property="og:url" content="https://tiffyai-usd.github.io/Transact/index46.html">
+    <meta property="og:type" content="website">
+
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
         :root { --electric-blue: #00f0ff; --shocking-pink: #ff007f; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
         body { margin: 0; background: #05070a; font-family: 'Orbitron', sans-serif; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .terminal-frame { background: rgba(10, 15, 24, 0.75); border: 1px solid var(--glass-border); padding: 25px; border-radius: 24px; width: 360px; max-height: 90vh; overflow-y: auto; }
+        .terminal-frame { background: rgba(10, 15, 24, 0.75); border: 1px solid var(--glass-border); padding: 25px; border-radius: 24px; width: 360px; max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto; }
         .hidden { display: none !important; }
         .brand-header { font-size: 18px; font-weight: 800; text-align: center; color: var(--electric-blue); margin-bottom: 20px; }
-        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--shocking-pink); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; font-family: 'Orbitron', sans-serif; }
-        .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .glass-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: #fff; padding: 15px; border-radius: 12px; cursor: pointer; font-family: 'Orbitron', sans-serif; }
+        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--shocking-pink); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; }
         #qrcode { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; width: 200px !important; height: 200px !important; }
-        .viewfinder-wrapper { width: 100%; min-height: 260px; background: #000; border: 2px dashed var(--shocking-pink); margin: 10px 0; }
-        #rewardModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        .viewfinder-wrapper { width: 100%; min-height: 260px; background: #000; margin: 12px 0; border: 2px dashed var(--shocking-pink); }
+        .share-container { text-align: center; margin-top: 10px; }
+        .share-btn { background: var(--electric-blue); color: #000; border: none; font-weight: bold; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 12px; width: 100%; text-transform: uppercase; }
+        
+        /* Reward Pop-up Styles */
+        #rewardModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        .reward-card { background: linear-gradient(135deg, #0a0f18, #1a0b1f); border: 2px solid var(--electric-blue); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 0 30px var(--electric-blue); }
     </style>
 </head>
 <body>
 
 <div id="rewardModal" class="hidden">
-    <div style="background: #1a0b1f; padding: 30px; border-radius: 20px; border: 1px solid var(--electric-blue);">
-        <h1>REWARD ISSUED!</h1>
+    <div class="reward-card">
+        <h1 style="color:var(--electric-blue);">REWARD ISSUED!</h1>
+        <p style="font-size: 24px; color: #fff;">$500.00</p>
+        <p style="font-size: 12px; color: var(--shocking-pink);">CREDITED TO YOUR SOVEREIGN BANK</p>
         <button class="action-panel-btn" onclick="document.getElementById('rewardModal').classList.add('hidden')">CONFIRM</button>
     </div>
 </div>
@@ -33,110 +43,168 @@
 <div class="terminal-frame">
     <div id="authView">
         <div class="brand-header">SECURE ACCESS</div>
-        <div class="pin-grid">
-            <button class="glass-btn" onclick="input(1)">1</button><button class="glass-btn" onclick="input(2)">2</button><button class="glass-btn" onclick="input(3)">3</button>
-            <button class="glass-btn" onclick="input(4)">4</button><button class="glass-btn" onclick="input(5)">5</button><button class="glass-btn" onclick="input(6)">6</button>
-            <button class="glass-btn" onclick="input(7)">7</button><button class="glass-btn" onclick="input(8)">8</button><button class="glass-btn" onclick="input(9)">9</button>
-            <button class="glass-btn" onclick="clearPin()">C</button><button class="glass-btn" onclick="input(0)">0</button><button class="glass-btn" onclick="submit()">E</button>
-        </div>
-        <button id="changePinBtn" class="action-panel-btn" onclick="setInitialPin()">CHANGE PIN / REWARD</button>
+        <button class="action-panel-btn" onclick="authenticate()">UNLOCK INTERNATIONAL BANKING</button>
+        <button id="changePinBtn" class="action-panel-btn" onclick="setInitialPin()">CHANGE DEFAULT PIN (RECEIVE $500 REWARD)</button>
     </div>
 
     <div id="dashboardView" class="hidden">
-        <div class="brand-header">TIFFY BANK</div>
-        <div id="totalBalanceDisplay" style="text-align:center; font-size:32px; margin: 20px 0;">$0.00</div>
-        <button class="action-panel-btn" onclick="harvest()">RECOLLECT HARVEST</button>
-        <button class="action-panel-btn" onclick="openSend()">SEND ASSET</button>
-        <button class="action-panel-btn" onclick="openReceive()">RECEIVE ASSET</button>
+        <div class="brand-header">TIFFY INTERNATIONAL BANK</div>
+        <div style="text-align: center; margin: 20px 0;">
+            <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800;">$0.00</div>
+            <div id="escrowContainer" style="display:none; margin-top:10px;">
+                <p style="color:var(--shocking-pink); font-size:10px; margin:0;">ESCROWED: $<span id="pendingOutboundValue">0.00</span></p>
+                <button class="action-panel-btn" style="background:var(--electric-blue); color:#000; font-weight:bold; margin-top:10px;" onclick="finalizeEscrow()">CONFIRM RECEIPT (FINALIZE)</button>
+                <button class="action-panel-btn" onclick="cancelPendingTransfer()">CANCEL ESCROW</button>
+            </div>
+        </div>
+        <div id="mainActions">
+            <button class="action-panel-btn" onclick="openTapToPayMode()">SEND ASSET</button>
+            <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
+            <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">TOP UP YOUR BALANCE</button>
+        </div>
     </div>
 
     <div id="pairingView" class="hidden">
+        <h2 style="text-align:center; font-size:14px;">SHOW TO RECEIVER</h2>
         <canvas id="qrcode"></canvas>
-        <button class="action-panel-btn" onclick="shareQR()">SHARE QR IMAGE</button>
-        <button class="action-panel-btn" onclick="exit()">BACK</button>
+        <div class="share-container">
+            <button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button>
+        </div>
+        <button class="action-panel-btn" onclick="exitMode()">BACK TO DASHBOARD</button>
     </div>
 
     <div id="scannerView" class="hidden">
         <div class="viewfinder-wrapper" id="camera-viewfinder"></div>
-        <input type="file" id="f" style="display:none" onchange="fileScan(event)">
-        <button class="action-panel-btn" onclick="document.getElementById('f').click()">UPLOAD QR</button>
+        <input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
+        <button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="document.getElementById('qr-file-input').click()">UPLOAD QR IMAGE</button>
         <button class="action-panel-btn" onclick="stopScanner()">CANCEL</button>
     </div>
 </div>
 
 <script>
-    let p = "", s = null;
-    function input(n) { if(p.length < 6) p += n; }
-    function clearPin() { p = ""; }
-    function submit() {
-        if(p === (localStorage.getItem("Tiffy_User_PIN") || "1234")) {
-            document.getElementById('authView').classList.add('hidden');
-            document.getElementById('dashboardView').classList.remove('hidden');
-            load();
-        } else { alert("Denied"); clearPin(); }
+    let activeScanner = null;
+
+    window.onload = function() {
+        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") {
+            document.getElementById('changePinBtn').classList.add('hidden');
+        }
+    };
+
+    async function shareTransaction() {
+        const canvas = document.getElementById('qrcode');
+        const shareText = "Claim your $500 reward: Use PIN code 1234 and get $500 in your own sovereign bank when you change your pin! Start now: https://tiffyai-usd.github.io/Transact/index46.html";
+        
+        try {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
+            const shareData = {
+                title: 'Tiffy AI Reward',
+                text: shareText,
+                url: 'https://tiffyai-usd.github.io/Transact/index46.html',
+                files: [file]
+            };
+            if (navigator.canShare && navigator.canShare(shareData)) {
+                await navigator.share(shareData);
+            } else {
+                alert(shareText);
+            }
+        } catch (err) { console.error('Sharing failed', err); }
     }
 
     function setInitialPin() {
-        if(prompt("Old PIN:") === "1234") {
-            let n = prompt("New PIN:");
-            if(n) {
-                localStorage.setItem("Tiffy_User_PIN", n);
-                let b = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
-                localStorage.setItem("TUSD_Nitro_Storage", (b + 500).toFixed(2));
+        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") return;
+        const current = prompt("Verify Old PIN (Default is 1234):");
+        if(current === "1234") {
+            const newPin = prompt("Enter New Unique PIN:");
+            if(newPin && newPin.length >= 4) {
+                localStorage.setItem("Tiffy_User_PIN", newPin);
+                localStorage.setItem("Tiffy_PIN_Locked", "true");
+                
+                // Reward Logic
+                localStorage.setItem("TUSD_Nitro_Storage", "500.00");
+                
+                // UI Changes
+                document.getElementById('changePinBtn').classList.add('hidden');
                 document.getElementById('rewardModal').classList.remove('hidden');
-                load();
+                loadBalances();
+            }
+        } else { alert("Verification Failed."); }
+    }
+
+    function processQRData(data) {
+        if(data.startsWith("TIFFY_TX:")) {
+            const tx = JSON.parse(atob(data.split(":")[1]));
+            if(confirm("Accept incoming $" + tx.amount + "?")) {
+                let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+                localStorage.setItem("TUSD_Nitro_Storage", (bal + parseFloat(tx.amount)).toFixed(2));
+                alert("Transfer Successful.");
+                loadBalances();
             }
         }
     }
 
-    function load() {
-        let h = 0;
-        for(let i=0; i<localStorage.length; i++) {
-            let k = localStorage.key(i);
-            if(k.includes('tetrus') || k.includes('tiffy')) h += parseFloat(localStorage.getItem(k)) || 0;
-        }
-        document.getElementById('totalBalanceDisplay').innerText = "$" + (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0) + h).toFixed(2);
+    function handleFileUpload(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        const scanner = new Html5Qrcode("camera-viewfinder");
+        scanner.scanFile(file, true).then(data => {
+            stopScanner();
+            processQRData(data);
+        }).catch(err => alert("Could not scan QR from image."));
     }
 
-    function harvest() {
-        let h = 0;
-        for(let i=0; i<localStorage.length; i++) {
-            let k = localStorage.key(i);
-            if(k.includes('tetrus') || k.includes('tiffy')) {
-                h += parseFloat(localStorage.getItem(k)) || 0;
-                localStorage.setItem(k, "0.00");
-            }
-        }
-        let b = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
-        localStorage.setItem("TUSD_Nitro_Storage", (b + h).toFixed(2));
-        load();
+    function authenticate() {
+        const savedPin = localStorage.getItem("Tiffy_User_PIN") || "1234";
+        const pin = prompt("Enter PIN:");
+        if(pin === savedPin) {
+            document.getElementById('authView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.remove('hidden');
+            loadBalances();
+        } else { alert("Access Denied"); }
     }
 
-    function openSend() {
-        let a = prompt("Amount:");
-        if(!a) return;
+    function loadBalances() {
+        const nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+        const pend = parseFloat(localStorage.getItem("Tiffy_Pending_Outbound") || 0);
+        document.getElementById('totalBalanceDisplay').innerText = "$" + nitro.toFixed(2);
+        const escContainer = document.getElementById('escrowContainer');
+        if(pend > 0) {
+            escContainer.style.display = "block";
+            document.getElementById('pendingOutboundValue').innerText = pend.toFixed(2);
+        } else { escContainer.style.display = "none"; }
+    }
+
+    function openTapToPayMode() {
+        let amt = prompt("Amount:");
+        if(!amt || isNaN(amt)) return;
+        let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+        if(parseFloat(amt) > bal) { alert("Insufficient Funds."); return; }
+        localStorage.setItem("TUSD_Nitro_Storage", (bal - parseFloat(amt)).toFixed(2));
+        localStorage.setItem("Tiffy_Pending_Outbound", amt);
         document.getElementById('dashboardView').classList.add('hidden');
         document.getElementById('pairingView').classList.remove('hidden');
-        QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify({amt: a})), {width:200});
+        QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify({amount: amt})), {width: 200});
     }
 
-    async function shareQR() {
-        const canvas = document.getElementById('qrcode');
-        canvas.toBlob(async (blob) => {
-            const file = new File([blob], "qr.png", {type: "image/png"});
-            await navigator.share({files: [file], text: "My Tiffy QR"});
-        });
+    function finalizeEscrow() { localStorage.removeItem("Tiffy_Pending_Outbound"); alert("Transaction finalized."); loadBalances(); }
+    function cancelPendingTransfer() { 
+        let pend = parseFloat(localStorage.getItem("Tiffy_Pending_Outbound") || 0);
+        let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+        localStorage.setItem("TUSD_Nitro_Storage", (bal + pend).toFixed(2));
+        localStorage.removeItem("Tiffy_Pending_Outbound");
+        loadBalances(); 
     }
-
-    function openReceive() {
+    function activateScanner() {
         document.getElementById('dashboardView').classList.add('hidden');
         document.getElementById('scannerView').classList.remove('hidden');
-        s = new Html5Qrcode("camera-viewfinder");
-        s.start({facingMode: "environment"}, {fps: 10, qrbox: 250}, (d) => { stopScanner(); alert(d); });
+        activeScanner = new Html5Qrcode("camera-viewfinder");
+        activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => {
+            stopScanner();
+            processQRData(data);
+        });
     }
-
-    function stopScanner() { if(s) s.stop().then(exit); else exit(); }
-    function exit() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); load(); }
+    function stopScanner() { if (activeScanner) activeScanner.stop().then(exitMode).catch(exitMode); else exitMode(); }
+    function exitMode() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); loadBalances(); }
 </script>
 </body>
 </html>
