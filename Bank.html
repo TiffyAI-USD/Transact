@@ -34,7 +34,7 @@
         .harvest-box { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px; text-align: center; }
     </style>
 </head>
-<body>
+<body onload="initUI()">
 
 <div id="rewardModal" class="hidden">
     <div class="reward-card">
@@ -84,7 +84,6 @@
         <div class="share-container"><button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button></div>
         <button class="action-panel-btn" onclick="exitMode()">BACK TO DASHBOARD</button>
     </div>
-
     <div id="scannerView" class="hidden">
         <div class="viewfinder-wrapper" id="camera-viewfinder"></div>
         <input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
@@ -95,6 +94,12 @@
 
 <script>
     let activeScanner = null, currentPin = "";
+
+    function initUI() {
+        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") {
+            document.getElementById('changePinBtn').classList.add('hidden');
+        }
+    }
     
     function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
     function clearPin() { currentPin = ""; updateDots(); }
@@ -117,8 +122,10 @@
             if(newPin && newPin.length >= 4 && !isNaN(newPin)) {
                 localStorage.setItem("User_Access_PIN", String(newPin));
                 localStorage.setItem("Tiffy_PIN_Locked", "true");
+                
                 let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
                 localStorage.setItem("TUSD_Nitro_Storage", (bal + 500.00).toFixed(2));
+                
                 document.getElementById('changePinBtn').classList.add('hidden');
                 document.getElementById('rewardModal').classList.remove('hidden');
                 loadBalances();
@@ -145,6 +152,7 @@
         }
     }
 
+    // ... (keep your existing QR/Scanner functions here) ...
     function openTapToPayMode() {
         let amt = prompt("Amount:");
         if(!amt) return;
@@ -152,27 +160,18 @@
         document.getElementById('pairingView').classList.remove('hidden');
         QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify({amount: amt})));
     }
-
     async function shareTransaction() {
         const canvas = document.getElementById('qrcode');
         const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
         if (navigator.share) await navigator.share({files: [new File([blob], 'QR.png', {type: 'image/png'})], text: "Transaction QR"});
     }
-
     function activateScanner() {
         document.getElementById('dashboardView').classList.add('hidden');
         document.getElementById('scannerView').classList.remove('hidden');
         activeScanner = new Html5Qrcode("camera-viewfinder");
-        activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => {
-            stopScanner();
-            processQRData(data);
-        });
+        activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => { stopScanner(); processQRData(data); });
     }
-
-    function handleFileUpload(e) {
-        new Html5Qrcode("camera-viewfinder").scanFile(e.target.files[0], true).then(processQRData);
-    }
-
+    function handleFileUpload(e) { new Html5Qrcode("camera-viewfinder").scanFile(e.target.files[0], true).then(processQRData); }
     function processQRData(data) {
         if(data.startsWith("TIFFY_TX:")) {
             try {
@@ -184,7 +183,6 @@
         }
         stopScanner();
     }
-
     function stopScanner() { if(activeScanner) activeScanner.stop().then(exitMode); else exitMode(); }
     function exitMode() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); loadBalances(); }
 </script>
