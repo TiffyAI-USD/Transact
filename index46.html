@@ -1,160 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TIFFY AI - SECURE BANKING</title>
-    
-    <meta property="og:title" content="TIFFY AI - SECURE INTERNATIONAL BANK">
-    <meta property="og:description" content="Claim your $500 reward: Use Default PIN Code 1234, change the default pin, make it yours and get $500 in your own sovereign bank to buy and sell anything!">
-    <meta property="og:url" content="https://tiffyai-usd.github.io/Transact/index46.html">
-    <meta property="og:type" content="website">
-
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-
-    <style>
-        :root { --electric-blue: #00f0ff; --shocking-pink: #ff007f; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
-        body { margin: 0; background: radial-gradient(circle at 50% 50%, #0d1117 0%, #05070a 100%); font-family: 'Orbitron', sans-serif; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
-        
-        /* Terminal Frame from Code 1 */
-        .terminal-frame { background: rgba(10, 15, 24, 0.65); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 35px 25px; border-radius: 28px; width: 350px; height: 560px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; overflow-y: auto; }
-        .hidden { display: none !important; }
-        
-        .brand-header { font-size: 18px; font-weight: 800; text-align: center; color: var(--electric-blue); margin-bottom: 20px; text-transform: uppercase; }
-        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--shocking-pink); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; font-family: 'Orbitron', sans-serif; }
-        
-        #qrcode { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; width: 200px !important; height: 200px !important; }
-        .viewfinder-wrapper { width: 100%; min-height: 260px; background: #000; margin: 12px 0; border: 2px dashed var(--shocking-pink); }
-        
-        /* Reward Pop-up Styles */
-        #rewardModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 999; }
-        .reward-card { background: linear-gradient(135deg, #0a0f18, #1a0b1f); border: 2px solid var(--electric-blue); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 0 30px var(--electric-blue); width: 80%; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TIFFY AI - Ultimate Gateway Terminal</title>
+<meta property="og:title" content="TIFFY AI - SECURE INTERNATIONAL BANK">
+<meta property="og:description" content="Claim your $500 reward: Use Default PIN Code 1234, change the default pin, make it yours and get $500 in your own sovereign bank!">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root { --electric-blue: #00f0ff; --shocking-pink: #ff007f; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
+  body { margin: 0; width: 100vw; height: 100vh; background: radial-gradient(circle at 50% 50%, #0d1117 0%, #05070a 100%); font-family: 'Orbitron', sans-serif; color: #ffffff; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+  .terminal-frame { background: rgba(10, 15, 24, 0.65); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 25px; border-radius: 28px; width: 360px; height: 600px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; overflow-y: auto; }
+  .hidden { display: none !important; }
+  .brand-header { font-size: 20px; font-weight: 800; text-align: center; color: var(--electric-blue); margin-bottom: 20px; text-transform: uppercase; }
+  .glass-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: #ffffff; font-size: 16px; border-radius: 14px; padding: 12px; cursor: pointer; width: 100%; margin-top: 10px; }
+  .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--shocking-pink); border-radius: 14px; padding: 12px; color: #ffffff; font-weight: 700; font-size: 11px; text-transform: uppercase; cursor: pointer; margin-top: 10px; width: 100%; }
+  #qrcode { background: white; padding: 10px; border-radius: 12px; margin: 15px auto; display: block; }
+  .reward-card { background: rgba(10, 15, 24, 0.95); border: 2px solid var(--electric-blue); padding: 30px; border-radius: 20px; text-align: center; position: fixed; z-index: 1000; top: 10%; width: 80%; left: 10%; }
+  .debug-panel { background: #000; border: 1px solid #333; padding: 10px; margin-top: 20px; font-size: 10px; color: #00ff00; border-radius: 8px; }
+</style>
 </head>
 <body>
 
-<div id="rewardModal" class="hidden">
-    <div class="reward-card">
-        <h1 style="color:var(--electric-blue);">REWARD ISSUED!</h1>
-        <p style="font-size: 24px;">$500.00</p>
-        <p style="font-size: 10px; color: var(--shocking-pink);">CREDITED TO YOUR SOVEREIGN BANK</p>
-        <button class="action-panel-btn" onclick="document.getElementById('rewardModal').classList.add('hidden')">CONFIRM</button>
-    </div>
+<div id="rewardModal" class="hidden reward-card">
+    <h1 style="color:var(--electric-blue);">REWARD ISSUED!</h1>
+    <p style="font-size: 20px;">$500.00 CREDITED</p>
+    <button class="action-panel-btn" onclick="document.getElementById('rewardModal').classList.add('hidden')">CONFIRM</button>
 </div>
 
 <div class="terminal-frame">
-    <div id="authView">
-        <div class="brand-header">SECURE ACCESS</div>
-        <button class="action-panel-btn" onclick="authenticate()">UNLOCK INTERNATIONAL BANKING</button>
-        <button id="changePinBtn" class="action-panel-btn" onclick="setInitialPin()">CHANGE DEFAULT PIN (RECEIVE $500 REWARD)</button>
-    </div>
+  <div id="authView">
+    <div class="brand-header">SECURE ACCESS</div>
+    <button class="glass-btn" onclick="authenticate()">UNLOCK BANKING</button>
+    <button id="changePinBtn" class="action-panel-btn" onclick="setInitialPin()">CHANGE PIN (GET $500)</button>
+  </div>
 
-    <div id="dashboardView" class="hidden">
-        <div class="brand-header">TIFFY INTERNATIONAL BANK</div>
-        <div style="text-align: center; margin: 20px 0;">
-            <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800;">$0.00</div>
-            <div id="escrowContainer" style="display:none; margin-top:10px;">
-                <p style="color:var(--shocking-pink); font-size:10px; margin:0;">ESCROWED: $<span id="pendingOutboundValue">0.00</span></p>
-                <button class="action-panel-btn" style="background:var(--electric-blue); color:#000; font-weight:bold;" onclick="finalizeEscrow()">CONFIRM RECEIPT</button>
-                <button class="action-panel-btn" onclick="cancelPendingTransfer()">CANCEL ESCROW</button>
-            </div>
-        </div>
-        <button class="action-panel-btn" onclick="harvestAndRecollect()">RECOLLECT HARVEST</button>
-        <button class="action-panel-btn" onclick="openTapToPayMode()">SEND ASSET</button>
-        <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
+  <div id="dashboardView" class="hidden">
+    <div class="brand-header">TIFFY INTERNATIONAL</div>
+    <div style="text-align: center; margin: 20px 0;">
+        <p style="font-size: 10px; color: #8b9bb4;">SOVEREIGN BALANCE</p>
+        <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800;">$0.00</div>
     </div>
+    <button class="action-panel-btn" onclick="harvestAndRecollect()">RECOLLECT HARVEST</button>
+    <button class="action-panel-btn" onclick="openTapToPayMode()">SEND ASSET</button>
+    <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
+    
+    <div class="debug-panel" id="debugMonitor">
+        SCANNING STORAGE...
+    </div>
+  </div>
 
-    <div id="pairingView" class="hidden">
-        <h2 style="text-align:center; font-size:14px;">SHOW TO RECEIVER</h2>
-        <canvas id="qrcode"></canvas>
-        <button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button>
-        <button class="action-panel-btn" onclick="exitMode()">BACK TO DASHBOARD</button>
-    </div>
+  <div id="pairingView" class="hidden">
+    <div class="brand-header">TRANSACTION</div>
+    <div id="qrcode"></div>
+    <button class="action-panel-btn" onclick="shareTransaction()">SHARE QR 🔗</button>
+    <button class="glass-btn" onclick="exitMode()">BACK</button>
+  </div>
 
-    <div id="scannerView" class="hidden">
-        <div class="viewfinder-wrapper" id="camera-viewfinder"></div>
-        <button class="action-panel-btn" onclick="stopScanner()">CANCEL SCAN</button>
-    </div>
+  <div id="scannerView" class="hidden">
+    <div id="camera-viewfinder" style="width:100%; height:250px; background:#000;"></div>
+    <button class="action-panel-btn" onclick="stopScanner()">CANCEL SCAN</button>
+  </div>
 </div>
 
 <script>
-    let activeScanner = null;
-
-    // PIN AND REWARD LOGIC
-    function setInitialPin() {
-        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") return;
-        const current = prompt("Verify Old PIN (Default is 1234):");
-        if(current === "1234") {
-            const newPin = prompt("Enter New Unique PIN:");
-            if(newPin && newPin.length >= 4) {
-                localStorage.setItem("Tiffy_User_PIN", newPin);
-                localStorage.setItem("Tiffy_PIN_Locked", "true");
-                localStorage.setItem("TUSD_Nitro_Storage", "500.00");
-                document.getElementById('changePinBtn').classList.add('hidden');
-                document.getElementById('rewardModal').classList.remove('hidden');
-                loadBalances();
-            }
-        } else { alert("Verification Failed."); }
-    }
-
-    function harvestAndRecollect() {
-        let totalHarvest = 0;
-        for(let i=0; i<localStorage.length; i++) {
-            let k = localStorage.key(i);
-            if(k.toLowerCase().includes('tetrus') || k.toLowerCase().includes('tiffy')) {
-                totalHarvest += parseFloat(localStorage.getItem(k)) || 0;
-                localStorage.setItem(k, "0.00"); // FIXED: Reset to 0, NOT remove
-            }
-        }
-        let currentBal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
-        localStorage.setItem("TUSD_Nitro_Storage", (currentBal + totalHarvest).toFixed(2));
-        alert("Harvest of $" + totalHarvest.toFixed(2) + " collected.");
-        loadBalances();
-    }
-
-    function loadBalances() {
-        const nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
-        document.getElementById('totalBalanceDisplay').innerText = "$" + nitro.toFixed(2);
-    }
-
-    function authenticate() {
-        const savedPin = localStorage.getItem("Tiffy_User_PIN") || "1234";
-        const pin = prompt("Enter PIN:");
-        if(pin === savedPin) {
-            document.getElementById('authView').classList.add('hidden');
-            document.getElementById('dashboardView').classList.remove('hidden');
+  // PIN Logic
+  function setInitialPin() {
+    if(localStorage.getItem("Tiffy_PIN_Locked") === "true") return;
+    const current = prompt("Verify Old PIN (Default 1234):");
+    if(current === "1234") {
+        const newPin = prompt("Enter New Unique PIN:");
+        if(newPin && newPin.length >= 4) {
+            localStorage.setItem("Tiffy_User_PIN", newPin);
+            localStorage.setItem("Tiffy_PIN_Locked", "true");
+            localStorage.setItem("TUSD_Nitro_Storage", "500.00");
+            document.getElementById('rewardModal').classList.remove('hidden');
             loadBalances();
-        } else { alert("Access Denied"); }
+        }
     }
+  }
 
-    // SHARED FUNCTIONS
-    function shareTransaction() {
-        const shareText = "Claim your $500 reward: Use PIN code 1234 and get $500 in your own sovereign bank when you change your pin! Start now: https://tiffyai-usd.github.io/Transact/index46.html";
-        if (navigator.share) { navigator.share({text: shareText}); } else { alert(shareText); }
+  function authenticate() {
+    const pin = prompt("Enter PIN:");
+    if(pin === (localStorage.getItem("Tiffy_User_PIN") || "1234")) {
+        document.getElementById('authView').classList.add('hidden');
+        document.getElementById('dashboardView').classList.remove('hidden');
+        loadBalances();
+    } else { alert("Access Denied"); }
+  }
+
+  // CORE HARVEST LOGIC
+  function loadBalances() {
+    let rawGame = 0;
+    let debugText = "LIVE STORAGE:<br>";
+    for(let i=0; i<localStorage.length; i++) {
+        let k = localStorage.key(i);
+        if(k.toLowerCase().includes('tetrus') || k.toLowerCase().includes('tiffy')) {
+            let val = parseFloat(localStorage.getItem(k)) || 0;
+            rawGame += val;
+            debugText += `${k}: $${val.toFixed(2)}<br>`;
+        }
     }
+    const nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+    document.getElementById('totalBalanceDisplay').innerText = "$" + (nitro + rawGame).toFixed(2);
+    document.getElementById('debugMonitor').innerHTML = debugText;
+  }
 
-    function openTapToPayMode() {
-        let amt = prompt("Amount:");
-        if(!amt || isNaN(amt)) return;
-        document.getElementById('dashboardView').classList.add('hidden');
-        document.getElementById('pairingView').classList.remove('hidden');
-        QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify({amount: amt})), {width: 200});
+  function harvestAndRecollect() {
+    let totalHarvest = 0;
+    for(let i=0; i<localStorage.length; i++) {
+        let k = localStorage.key(i);
+        if(k.toLowerCase().includes('tetrus') || k.toLowerCase().includes('tiffy')) {
+            totalHarvest += parseFloat(localStorage.getItem(k)) || 0;
+            localStorage.setItem(k, "0.00"); // KEEP KEY, SET TO 0
+        }
     }
+    let currentNitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || 0);
+    localStorage.setItem("TUSD_Nitro_Storage", (currentNitro + totalHarvest).toFixed(2));
+    alert("Harvest Collected: $" + totalHarvest.toFixed(2));
+    loadBalances();
+  }
 
-    function activateScanner() {
-        document.getElementById('dashboardView').classList.add('hidden');
-        document.getElementById('scannerView').classList.remove('hidden');
-        activeScanner = new Html5Qrcode("camera-viewfinder");
-        activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => {
-            stopScanner();
-            alert("QR Scanned successfully!");
-        });
-    }
+  // UI Flow
+  function openTapToPayMode() {
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('pairingView').classList.remove('hidden');
+    const qr = qrcode(0, 'M');
+    qr.addData("TIFFY_TX:PAYMENT_REQUEST");
+    qr.make();
+    document.getElementById('qrcode').innerHTML = qr.createImgTag(5);
+  }
 
-    function stopScanner() { if(activeScanner) activeScanner.stop().then(exitMode).catch(exitMode); else exitMode(); }
-    function exitMode() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); }
+  function exitMode() {
+    document.getElementById('pairingView').classList.add('hidden');
+    document.getElementById('scannerView').classList.add('hidden');
+    document.getElementById('dashboardView').classList.remove('hidden');
+    loadBalances();
+  }
+
+  function activateScanner() {
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('scannerView').classList.remove('hidden');
+    const scanner = new Html5Qrcode("camera-viewfinder");
+    scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => {
+        scanner.stop();
+        alert("Scanned: " + data);
+        exitMode();
+    });
+  }
+
+  function shareTransaction() {
+    const text = "Claim your $500 reward: https://tiffyai-usd.github.io/Transact/index46.html";
+    if (navigator.share) navigator.share({text: text}); else alert(text);
+  }
 </script>
 </body>
 </html>
