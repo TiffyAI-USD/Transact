@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIFFY AI - Ultimate Gateway Terminal</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        :root { --electric-blue: #00f0ff; --shocking-pink: #ff007f; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
+        body { margin: 0; background: #05070a; font-family: 'Orbitron', sans-serif; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .terminal-frame { background: rgba(10, 15, 24, 0.75); border: 1px solid var(--glass-border); padding: 25px; border-radius: 24px; width: 360px; max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto; }
+        .hidden { display: none !important; }
+        .brand-header { font-size: 18px; font-weight: 800; text-align: center; color: var(--electric-blue); margin-bottom: 20px; }
+        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--shocking-pink); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; font-family: 'Orbitron', sans-serif; }
+        #qrcode { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; width: 200px !important; height: 200px !important; }
+        .harvest-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .harvest-box { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="terminal-frame">
+    <div id="dashboardView">
+        <div class="brand-header">TIFFY INTERNATIONAL BANK</div>
+        <div style="text-align: center; margin: 20px 0;">
+            <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800;">$0.00</div>
+            <div class="harvest-container">
+                <div class="harvest-box">
+                    <p style="font-size:8px; color:#888;">HARVESTED UTILITY</p>
+                    <div id="tokenDisplay" style="font-weight:bold;">0.00</div>
+                </div>
+                <div class="harvest-box">
+                    <p style="font-size:8px; color:#888;">TUSD NITRO (20x)</p>
+                    <div id="conversionDisplay" style="font-weight:bold;">0.00</div>
+                </div>
+            </div>
+            <button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="collectEarnings()">COLLECT EARNINGS</button>
+        </div>
+        
+        <button class="action-panel-btn" style="background:#550000; border-color:red;" onclick="restoreMyBalance()">RESTORE BALANCE (FIX GLITCH)</button>
+    </div>
+</div>
+
+<script>
+    // --- 1. Recovery Logic ---
+    function restoreMyBalance() {
+        if(confirm("Restore balance to $5413.00 and fix glitch?")) {
+            localStorage.clear();
+            localStorage.setItem("TUSD_Nitro_Storage", "5413.00");
+            localStorage.setItem("Tiffy_Harvest_Pending", "84.00");
+            alert("State Restored. Refreshing...");
+            window.location.reload();
+        }
+    }
+
+    // --- 2. Clean Balance Loading (No more loops!) ---
+    function loadBalances() {
+        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
+        let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
+        
+        document.getElementById('totalBalanceDisplay').innerText = "$" + nitro.toFixed(2);
+        document.getElementById('tokenDisplay').innerText = tokens.toFixed(2);
+        document.getElementById('conversionDisplay').innerText = (tokens * 20).toFixed(2);
+    }
+
+    // --- 3. Simple Collection ---
+    function collectEarnings() {
+        let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
+        if (tokens > 0) {
+            let bal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
+            localStorage.setItem("TUSD_Nitro_Storage", (bal + (tokens * 20)).toFixed(2));
+            localStorage.setItem("Tiffy_Harvest_Pending", "0.00");
+            alert("Earnings collected!");
+            loadBalances();
+        }
+    }
+
+    // Run on load
+    window.onload = loadBalances;
+</script>
+</body>
+</html>
