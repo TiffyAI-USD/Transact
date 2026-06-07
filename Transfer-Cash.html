@@ -160,12 +160,18 @@
     }
 
     function openTapToPayMode() {
-        let amt = prompt("Amount:");
+        const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
+        const currentBalance = parseFloat(localStorage.getItem(key) || "0.00");
+        let amt = prompt("Enter amount to send (Current Balance: " + currentBalance.toFixed(2) + "):");
         if(!amt) return;
+        const sendAmount = parseFloat(amt);
+        if (isNaN(sendAmount) || sendAmount <= 0) { alert("Invalid amount."); return; }
+        if (sendAmount > currentBalance) { alert("Insufficient funds!"); return; }
+        
         const txData = {
             id: 'tx_' + Math.random().toString(36).substr(2, 9),
             timestamp: Date.now(),
-            amount: amt,
+            amount: sendAmount.toFixed(2),
             asset: activeAccount
         };
         document.getElementById('dashboardView').classList.add('hidden');
