@@ -89,6 +89,15 @@
         {name: "AUD", rate: 1.50}
     ];
 
+    function isTxValid(txId, timestamp) {
+        const now = Date.now();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        if (now - timestamp > twentyFourHours) return { valid: false, msg: "QR Code expired (24h limit)." };
+        let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
+        if (usedTxs.includes(txId)) return { valid: false, msg: "This QR code has already been used." };
+        return { valid: true };
+    }
+
     function initUI() { if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); setActiveAccount('nitro'); }
     function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
     function clearPin() { currentPin = ""; updateDots(); }
@@ -153,9 +162,15 @@
     function openTapToPayMode() {
         let amt = prompt("Amount:");
         if(!amt) return;
+        const txData = {
+            id: 'tx_' + Math.random().toString(36).substr(2, 9),
+            timestamp: Date.now(),
+            amount: amt,
+            asset: activeAccount
+        };
         document.getElementById('dashboardView').classList.add('hidden');
         document.getElementById('pairingView').classList.remove('hidden');
-        QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify({amount: amt, asset: activeAccount})));
+        QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify(txData)));
     }
 
     async function shareTransaction() {
@@ -173,11 +188,19 @@
         if(data.startsWith("TIFFY_TX:")) {
             try {
                 const tx = JSON.parse(atob(data.split(":")[1]));
-                const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
-                localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
-                loadBalances();
-                alert("Received " + tx.amount + " " + (tx.asset || "Nitro"));
-            } catch(e) { alert("Invalid Code"); }
+                const check = isTxValid(tx.id, tx.timestamp);
+                if (!check.valid) {
+                    alert(check.msg);
+                } else {
+                    let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
+                    usedTxs.push(tx.id);
+                    localStorage.setItem("Tiffy_Used_TXs", JSON.stringify(usedTxs));
+                    const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
+                    localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
+                    loadBalances();
+                    alert("Confirmed: Received " + tx.amount + " " + tx.asset.toUpperCase());
+                }
+            } catch(e) { alert("Invalid or corrupted QR data."); }
         }
         stopScanner();
     }
