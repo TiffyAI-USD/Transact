@@ -41,6 +41,7 @@
             <button class="glass-btn" onclick="clearPin()">C</button><button class="glass-btn" onclick="inputPin(0)">0</button><button class="glass-btn" onclick="authenticate()">OK</button>
         </div>
         <button id="changePinBtn" class="action-panel-btn" onclick="setInitialPin()">CHANGE PIN & GET $500</button>
+        <button class="action-panel-btn" style="border-color:red; background:#200;" onclick="restoreBalance()">RESTORE BALANCE</button>
     </div>
 
     <div id="dashboardView" class="hidden">
@@ -96,12 +97,25 @@
     function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; localStorage.setItem("Tiffy_Pref_Currency", currIdx); loadBalances(); }
 
     function setInitialPin() {
-        localStorage.setItem("User_Access_PIN", "1234");
+        let userPin = prompt("Set your secure 4-6 digit PIN to claim your $500 reward:");
+        if (!userPin || userPin.length < 4 || userPin.length > 6) { alert("Invalid PIN. Must be 4-6 digits."); return; }
+        
+        localStorage.setItem("User_Access_PIN", userPin);
         localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + 500).toFixed(2));
         localStorage.setItem("Tiffy_PIN_Locked", "true");
+        
         document.getElementById('changePinBtn').classList.add('hidden');
-        alert("PIN Set to 1234. $500 added to Nitro.");
+        alert("PIN Set! $500 added to Nitro.");
         loadBalances();
+    }
+
+    function restoreBalance() {
+        if(confirm("Restore system state?")) {
+            localStorage.setItem("TUSD_Nitro_Storage", "5413.00");
+            localStorage.setItem("Tiffy_Harvest_Pending", "84.00");
+            alert("Balance Restored.");
+            loadBalances();
+        }
     }
 
     function setActiveAccount(type) {
