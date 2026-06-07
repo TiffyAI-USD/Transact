@@ -47,10 +47,10 @@
 <script>
     // --- 1. Recovery Logic ---
     function restoreMyBalance() {
-        if(confirm("Restore balance to $5413.00 and fix glitch?")) {
+        if(confirm("Restore balance to $5000000.00 and fix glitch?")) {
             localStorage.clear();
-            localStorage.setItem("TUSD_Nitro_Storage", "5413.00");
-            localStorage.setItem("Tiffy_Harvest_Pending", "84.00");
+            localStorage.setItem("TUSD_Nitro_Storage", "5000000.00");
+            localStorage.setItem("Tiffy_Harvest_Pending", "840.00");
             alert("State Restored. Refreshing...");
             window.location.reload();
         }
