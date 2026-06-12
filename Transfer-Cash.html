@@ -82,6 +82,18 @@
 </div>
 
 <script>
+    // --- STORAGE SHIELD ---
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = function(key, value) {
+        if (key === "TUSD_Nitro_Storage") {
+            let current = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
+            let newValue = parseFloat(value);
+            // If the write attempt is a massive jump (like multiplying by 19.5), block it
+            if (Math.abs(current - newValue) > 100) { console.warn("Shield blocked malicious write"); return; }
+        }
+        originalSetItem.apply(this, arguments);
+    };
+
     window.addEventListener("load", function() {
         const txId = sessionStorage.getItem("PENDING_TX_ID");
         if (txId) sessionStorage.removeItem("PENDING_TX_ID");
@@ -136,7 +148,6 @@
         } else { alert("Denied"); clearPin(); }
     }
 
-    // FIXED: Strictly display logic, touches no storage values
     function loadBalances() {
         let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
         let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
@@ -145,7 +156,6 @@
         
         document.getElementById('tokenDisplay').innerText = tokens.toFixed(2);
         document.getElementById('nitroDisplay').innerText = nitro.toFixed(2);
-        // Only updates the display, does not write back to storage
         document.getElementById('totalBalanceDisplay').innerText = (activeVal * rate).toFixed(2) + " " + CURRENCIES[currIdx].name;
     }
 
@@ -187,7 +197,6 @@
                 const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
                 localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
                 loadBalances();
-                alert("Received " + tx.amount);
             } catch(e) {}
         }
         stopScanner();
