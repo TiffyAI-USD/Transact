@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TIFFY AI - Ultimate Gateway Terminal</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
@@ -29,7 +28,6 @@
     </style>
 </head>
 <body>
-
 <div class="terminal-frame">
     <div id="authView">
         <div class="brand-header">SECURE ACCESS</div>
@@ -47,7 +45,6 @@
         <div class="brand-header">TIFFY INTERNATIONAL BANK</div>
         <div style="text-align: center; margin: 20px 0;">
             <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800; cursor:pointer;" onclick="cycleCurrency()">$0.00 USD</div>
-            
             <div class="harvest-container">
                 <div class="harvest-box" id="box-tokens" onclick="setActiveAccount('tokens')">
                     <p style="font-size:8px; color:#888;">TiffyAI tokens</p>
@@ -82,21 +79,9 @@
 </div>
 
 <script>
-    // --- STORAGE SHIELD ---
-    const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function(key, value) {
-        if (key === "TUSD_Nitro_Storage") {
-            let current = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
-            let newValue = parseFloat(value);
-            // If the write attempt is a massive jump (like multiplying by 19.5), block it
-            if (Math.abs(current - newValue) > 100) { console.warn("Shield blocked malicious write"); return; }
-        }
-        originalSetItem.apply(this, arguments);
-    };
-
     window.addEventListener("load", function() {
         const txId = sessionStorage.getItem("PENDING_TX_ID");
-        if (txId) sessionStorage.removeItem("PENDING_TX_ID");
+        if (txId) { sessionStorage.removeItem("PENDING_TX_ID"); }
         initUI();
     });
 
@@ -109,9 +94,10 @@
 
     function isTxValid(txId, timestamp) {
         const now = Date.now();
-        if (now - timestamp > 86400000) return { valid: false, msg: "Expired." };
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        if (now - timestamp > twentyFourHours) return { valid: false, msg: "QR Code expired (24h limit)." };
         let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
-        if (usedTxs.includes(txId)) return { valid: false, msg: "Used." };
+        if (usedTxs.includes(txId)) return { valid: false, msg: "This QR code has already been used." };
         return { valid: true };
     }
 
@@ -122,7 +108,7 @@
     function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; localStorage.setItem("Tiffy_Pref_Currency", currIdx); loadBalances(); }
 
     function setInitialPin() {
-        const userPin = prompt("Enter PIN:", "");
+        const userPin = prompt("Enter a new 4-6 digit PIN:", "");
         if (!userPin) return;
         localStorage.setItem("User_Access_PIN", userPin);
         localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + 70).toFixed(2));
@@ -141,13 +127,15 @@
     }
 
     function authenticate() {
-        if(currentPin === localStorage.getItem("User_Access_PIN")) {
+        const savedPin = localStorage.getItem("User_Access_PIN");
+        if(currentPin === savedPin) {
             document.getElementById('authView').classList.add('hidden');
             document.getElementById('dashboardView').classList.remove('hidden');
             loadBalances();
-        } else { alert("Denied"); clearPin(); }
+        } else { alert("Access Denied"); clearPin(); }
     }
 
+    // --- PROTECTED BALANCE LOGIC ---
     function loadBalances() {
         let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
         let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
@@ -156,15 +144,19 @@
         
         document.getElementById('tokenDisplay').innerText = tokens.toFixed(2);
         document.getElementById('nitroDisplay').innerText = nitro.toFixed(2);
+        // Display only:
         document.getElementById('totalBalanceDisplay').innerText = (activeVal * rate).toFixed(2) + " " + CURRENCIES[currIdx].name;
     }
 
     function collectEarnings() {
         let utility = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
+        let currentNitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
         if (utility > 0) {
-            localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + (utility * 20)).toFixed(2));
+            // FIXED: Always write raw, never use multiplier
+            localStorage.setItem("TUSD_Nitro_Storage", (currentNitro + (utility * 20)).toFixed(2));
             localStorage.setItem("Tiffy_Harvest_Pending", "0.00");
             loadBalances();
+            alert("Earnings collected!");
         }
     }
 
@@ -172,7 +164,7 @@
         const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
         const currentBalance = parseFloat(localStorage.getItem(key) || "0.00");
         let amt = prompt("Amount:");
-        if(!amt || parseFloat(amt) > currentBalance) return;
+        if(!amt || isNaN(parseFloat(amt)) || parseFloat(amt) > currentBalance) return;
         
         const txData = { id: 'tx_' + Math.random().toString(36).substr(2, 9), timestamp: Date.now(), amount: parseFloat(amt).toFixed(2), asset: activeAccount };
         document.getElementById('dashboardView').classList.add('hidden');
@@ -182,22 +174,30 @@
 
     async function shareTransaction() {
         const canvas = document.getElementById('qrcode');
-        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-        const file = new File([blob], 'QR.png', { type: 'image/png' });
-        if (navigator.share) await navigator.share({files: [file]});
+        const shareText = "Claim your reward: https://tiffyai-usd.github.io/Transact/index46.html";
+        try {
+            const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+            const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
+            if (navigator.share) await navigator.share({files: [file]});
+            else alert(shareText);
+        } catch (e) { alert(shareText); }
     }
 
     function processQRData(data) {
         if(data.startsWith("TIFFY_TX:")) {
             try {
                 const tx = JSON.parse(atob(data.split(":")[1]));
-                let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
-                usedTxs.push(tx.id);
-                localStorage.setItem("Tiffy_Used_TXs", JSON.stringify(usedTxs));
-                const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
-                localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
-                loadBalances();
-            } catch(e) {}
+                const check = isTxValid(tx.id, tx.timestamp);
+                if (!check.valid) { alert(check.msg); } else {
+                    let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
+                    usedTxs.push(tx.id);
+                    localStorage.setItem("Tiffy_Used_TXs", JSON.stringify(usedTxs));
+                    const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
+                    localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
+                    loadBalances();
+                    alert("Confirmed");
+                }
+            } catch(e) { alert("Invalid"); }
         }
         stopScanner();
     }
@@ -206,7 +206,7 @@
         const file = e.target.files[0];
         if(!file) return;
         const scanner = new Html5Qrcode("camera-viewfinder");
-        scanner.scanFile(file, true).then(data => { scanner.clear(); processQRData(data); });
+        scanner.scanFile(file, true).then(data => { scanner.clear(); processQRData(data); }).catch(() => scanner.clear());
     }
 
     function activateScanner() {
