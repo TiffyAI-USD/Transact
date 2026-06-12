@@ -159,6 +159,7 @@
         }
     }
 
+    // UPDATED TRANSFER LOGIC
     function openTapToPayMode() {
         const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
         const currentBalance = parseFloat(localStorage.getItem(key) || "0.00");
@@ -190,6 +191,7 @@
         } catch (e) { alert(shareText); }
     }
 
+    // UPDATED RECEIVE/PROCESS LOGIC
     function processQRData(data) {
         if(data.startsWith("TIFFY_TX:")) {
             try {
@@ -242,4 +244,8 @@
         );
     }
 
-    function stopScanner() { if(activeScanner) activeScanner.stop
+    function stopScanner() { if(activeScanner) activeScanner.stop().then(exitMode).catch(exitMode); else exitMode(); }
+    function exitMode() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); loadBalances(); }
+</script>
+</body>
+</html>
