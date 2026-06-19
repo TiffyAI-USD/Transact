@@ -136,6 +136,7 @@
         } else { alert("Access Denied"); clearPin(); }
     }
 
+    // UPDATED LOAD BALANCES
     function loadBalances() {
         let rate = RATES[currIdx];
         let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
@@ -158,20 +159,22 @@
         }
     }
 
+    // UPDATED TAP TO PAY WITH CONVERSION
     function openTapToPayMode() {
         let rate = RATES[currIdx];
         const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
         const bal = parseFloat(localStorage.getItem(key) || "0.00");
-        let amt = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + (bal * rate).toFixed(2) + "):");
-        if(!amt) return;
-        let val = parseFloat(amt) / rate;
+        let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + (bal * rate).toFixed(2) + "):");
+        if(!amtStr) return;
+        let amt = parseFloat(amtStr);
+        let val = amt / rate; // Convert local currency input back to USD base for storage
         if (isNaN(val) || val <= 0) { alert("Invalid amount."); return; }
         if (val > bal) { alert("Insufficient funds!"); return; }
         
         const txData = {
             id: 'tx_' + Math.random().toString(36).substr(2, 9),
             timestamp: Date.now(),
-            amount: val.toFixed(2),
+            amount: val.toFixed(2), // Stored as USD base
             asset: activeAccount,
             currency: CURRENCIES[currIdx]
         };
@@ -205,7 +208,7 @@
                     const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
                     localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
                     loadBalances();
-                    alert("Confirmed: Received " + tx.amount + " " + tx.currency);
+                    alert("Confirmed: Received " + tx.amount + " (USD base)");
                 }
             } catch(e) { alert("Invalid or corrupted QR data."); }
         }
