@@ -141,6 +141,7 @@
         let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0");
         let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
         
+        // Always display normalized to the rate
         document.getElementById('tokenDisplay').innerText = (tokens * rate).toFixed(2);
         document.getElementById('nitroDisplay').innerText = (nitro * rate).toFixed(2);
         
@@ -162,16 +163,18 @@
         let rate = RATES[currIdx];
         const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
         const baseBal = parseFloat(localStorage.getItem(key) || "0");
+        const displayBal = (baseBal * rate).toFixed(2);
         
-        let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + ":");
+        let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Available: " + displayBal + "):");
         if(!amtStr) return;
         
         let amt = parseFloat(amtStr);
-        // Corrected Math: Deduct exactly the value relative to the base USD/Nitro storage
-        let deduction = amt / rate; 
-        
         if (isNaN(amt) || amt <= 0) { alert("Invalid amount."); return; }
-        if (deduction > baseBal) { alert("Insufficient funds!"); return; }
+        if (amt > displayBal) { alert("Insufficient funds!"); return; }
+        
+        // MATH FIX: Subtract the value relative to the base, NOT the display unit
+        // If 18.5 is the rate, R10 is 10/18.5 = 0.54 in base.
+        let deduction = amt / rate; 
         
         localStorage.setItem(key, (baseBal - deduction).toFixed(2));
         
@@ -212,7 +215,7 @@
                     localStorage.setItem("Tiffy_Used_TXs", JSON.stringify(usedTxs));
                     
                     const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
-                    // Corrected Math: Receive exactly the base value by converting incoming currency to USD/Nitro
+                    // MATH FIX: Add the value normalized to base
                     const incomingRate = RATES[CURRENCIES.indexOf(tx.currency)];
                     const amountInBase = parseFloat(tx.amount) / incomingRate;
                     
