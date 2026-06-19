@@ -94,7 +94,21 @@
         return { valid: true };
     }
 
-    function initUI() { if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); setActiveAccount('nitro'); }
+    function initUI() { 
+        // MIGRATION FIX: If old balance exists but new bucket is empty, move the money
+        let oldBal = localStorage.getItem("TUSD_Nitro_Storage");
+        if(oldBal) {
+            let defaultCur = CURRENCIES[0]; // USD
+            let newKey = "TUSD_Nitro_Storage_" + defaultCur;
+            if(!localStorage.getItem(newKey)) {
+                localStorage.setItem(newKey, oldBal);
+                localStorage.removeItem("TUSD_Nitro_Storage");
+            }
+        }
+        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); 
+        setActiveAccount('nitro'); 
+    }
+
     function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
     function clearPin() { currentPin = ""; updateDots(); }
     function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
@@ -108,12 +122,12 @@
             return;
         }
         localStorage.setItem("User_Access_PIN", userPin);
-        // Default to USD bucket for the sign-up bonus
-        let currentBal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage_USD") || "0");
-        localStorage.setItem("TUSD_Nitro_Storage_USD", (currentBal + 70).toFixed(2));
+        let cur = CURRENCIES[currIdx];
+        let currentBal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage_" + cur) || "0");
+        localStorage.setItem("TUSD_Nitro_Storage_" + cur, (currentBal + 70).toFixed(2));
         localStorage.setItem("Tiffy_PIN_Locked", "true");
         document.getElementById('changePinBtn').classList.add('hidden');
-        alert("Success! Your PIN is set. $70 added to USD wallet.");
+        alert("Success! Your PIN is set. $70 added to your " + cur + " wallet.");
         loadBalances();
     }
 
@@ -138,7 +152,6 @@
 
     function loadBalances() {
         let cur = CURRENCIES[currIdx];
-        // Use currency-specific storage buckets
         let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
         let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage_" + cur) || "0.00");
         
