@@ -58,18 +58,8 @@
         <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">MENU</button>
     </div>
 
-    <div id="pairingView" class="hidden">
-        <canvas id="qrcode"></canvas>
-        <div class="share-container"><button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button></div>
-        <button class="action-panel-btn" onclick="exitMode()">BACK</button>
-    </div>
-
-    <div id="scannerView" class="hidden">
-        <div class="viewfinder-wrapper" id="camera-viewfinder"></div>
-        <input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
-        <button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="document.getElementById('qr-file-input').click()">UPLOAD QR IMAGE</button>
-        <button class="action-panel-btn" onclick="stopScanner()">CANCEL</button>
-    </div>
+    <div id="pairingView" class="hidden"><canvas id="qrcode"></canvas><div class="share-container"><button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button></div><button class="action-panel-btn" onclick="exitMode()">BACK</button></div>
+    <div id="scannerView" class="hidden"><div class="viewfinder-wrapper" id="camera-viewfinder"></div><input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleFileUpload(event)"><button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="document.getElementById('qr-file-input').click()">UPLOAD QR IMAGE</button><button class="action-panel-btn" onclick="stopScanner()">CANCEL</button></div>
 </div>
 
 <script>
@@ -93,12 +83,10 @@
     function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; localStorage.setItem("Tiffy_Pref_Currency", currIdx); loadBalances(); }
 
     function setInitialPin() {
-        const userPin = prompt("Enter a new 4-6 digit PIN to secure your wallet and claim your $70 cash back:", "");
-        if (userPin === null) return;
-        if (userPin.length < 4 || userPin.length > 6 || isNaN(userPin)) { alert("Invalid PIN."); return; }
+        const userPin = prompt("Enter a new 4-6 digit PIN:", "");
+        if (!userPin || userPin.length < 4) return;
         localStorage.setItem("User_Access_PIN", userPin);
-        let currentBal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
-        localStorage.setItem("TUSD_Nitro_Storage", (currentBal + 70).toFixed(2));
+        localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + 70).toFixed(2));
         localStorage.setItem("Tiffy_PIN_Locked", "true");
         document.getElementById('changePinBtn').classList.add('hidden');
         loadBalances();
@@ -150,9 +138,9 @@
         if(!amtStr) return;
         let amt = parseFloat(amtStr);
         if (amt > currentDisplayBal) { alert("Insufficient funds!"); return; }
-        // DIRECT DEDUCTION: No rate division. Subtracting exact amount (units) from base.
+        // DIRECT SUBTRACTION: Subtracting exactly the amount entered, no rate conversion.
         localStorage.setItem(key, (bal - amt).toFixed(2));
-        const txData = { id: 'tx_' + Math.random().toString(36).substr(2, 9), timestamp: Date.now(), amount: amt.toFixed(2), currency: CURRENCIES[currIdx], asset: activeAccount };
+        const txData = { amount: amt.toFixed(2), currency: CURRENCIES[currIdx], asset: activeAccount, timestamp: Date.now() };
         document.getElementById('dashboardView').classList.add('hidden');
         document.getElementById('pairingView').classList.remove('hidden');
         QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify(txData)));
@@ -165,7 +153,7 @@
             const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
             const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
             if (navigator.share) await navigator.share({title: 'Tiffy AI', files: [file]});
-            else alert("Share feature not supported on this device.");
+            else alert("Share feature not supported.");
         } catch (e) { alert("Share error."); }
     }
 
@@ -173,18 +161,12 @@
         if(data.startsWith("TIFFY_TX:")) {
             try {
                 const tx = JSON.parse(atob(data.split(":")[1]));
-                const check = isTxValid(tx.id, tx.timestamp);
-                if (!check.valid) { alert(check.msg); } else {
-                    let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
-                    usedTxs.push(tx.id);
-                    localStorage.setItem("Tiffy_Used_TXs", JSON.stringify(usedTxs));
-                    const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
-                    let currentBal = parseFloat(localStorage.getItem(key) || "0");
-                    // DIRECT ADDITION: No rate division. Adding exact amount (units) to base.
-                    localStorage.setItem(key, (currentBal + parseFloat(tx.amount)).toFixed(2));
-                    loadBalances();
-                    alert("Confirmed: Received " + tx.amount + " " + tx.currency);
-                }
+                const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
+                let currentBal = parseFloat(localStorage.getItem(key) || "0");
+                // DIRECT ADDITION: Adding exactly the amount from QR, no rate conversion.
+                localStorage.setItem(key, (currentBal + parseFloat(tx.amount)).toFixed(2));
+                loadBalances();
+                alert("Confirmed: Received " + tx.amount + " " + tx.currency);
             } catch(e) { alert("Invalid QR"); }
         }
         stopScanner();
