@@ -46,7 +46,7 @@
     <div id="dashboardView" class="hidden">
         <div class="brand-header">TIFFY INTERNATIONAL BANK</div>
         <div style="text-align: center; margin: 20px 0;">
-            <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800; cursor:pointer;" onclick="cycleCurrency()">$0.00 USD</div>
+            <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800; cursor:pointer;" onclick="cycleCurrency()">0.00 USD</div>
             
             <div class="harvest-container">
                 <div class="harvest-box" id="box-tokens" onclick="setActiveAccount('tokens')">
@@ -83,10 +83,7 @@
 
 <script>
     let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
-    const CURRENCIES = [
-        {name: "USD", rate: 1.0}, {name: "ZAR", rate: 18.5}, {name: "EUR", rate: 0.92},
-        {name: "NGN", rate: 1500.0}, {name: "INR", rate: 83.0}, {name: "CNY", rate: 7.20}
-    ];
+    const CURRENCIES = ["USD", "ZAR", "EUR", "NGN", "INR", "CNY", "AUD"];
 
     function isTxValid(txId, timestamp) {
         const now = Date.now();
@@ -111,10 +108,12 @@
             return;
         }
         localStorage.setItem("User_Access_PIN", userPin);
-        localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + 70).toFixed(2));
+        // Default to USD bucket for the sign-up bonus
+        let currentBal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage_USD") || "0");
+        localStorage.setItem("TUSD_Nitro_Storage_USD", (currentBal + 70).toFixed(2));
         localStorage.setItem("Tiffy_PIN_Locked", "true");
         document.getElementById('changePinBtn').classList.add('hidden');
-        alert("Success! Your PIN is set. $70 added.");
+        alert("Success! Your PIN is set. $70 added to USD wallet.");
         loadBalances();
     }
 
@@ -138,32 +137,35 @@
     }
 
     function loadBalances() {
+        let cur = CURRENCIES[currIdx];
+        // Use currency-specific storage buckets
         let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
-        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
-        let rate = CURRENCIES[currIdx].rate;
-        let currencyName = CURRENCIES[currIdx].name;
-        
-        let activeRaw = (activeAccount === 'tokens' ? tokens : nitro);
+        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage_" + cur) || "0.00");
         
         document.getElementById('tokenDisplay').innerText = tokens.toFixed(2);
         document.getElementById('nitroDisplay').innerText = nitro.toFixed(2);
-        document.getElementById('totalBalanceDisplay').innerText = (activeRaw * rate).toFixed(2) + " " + currencyName;
+        
+        let displayVal = (activeAccount === 'tokens' ? tokens : nitro);
+        document.getElementById('totalBalanceDisplay').innerText = displayVal.toFixed(2) + " " + cur;
     }
 
     function collectEarnings() {
         let utility = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
         if (utility > 0) {
-            localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + (utility * 20)).toFixed(2));
+            let cur = CURRENCIES[currIdx];
+            let key = "TUSD_Nitro_Storage_" + cur;
+            localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + (utility * 20)).toFixed(2));
             localStorage.setItem("Tiffy_Harvest_Pending", "0.00");
             loadBalances();
-            alert("Earnings collected!");
+            alert("Earnings collected into " + cur + " wallet!");
         }
     }
 
     function openTapToPayMode() {
-        const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
+        let cur = CURRENCIES[currIdx];
+        const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage_" + cur;
         const currentBalance = parseFloat(localStorage.getItem(key) || "0.00");
-        let amt = prompt("Enter amount to send (Current Balance: " + currentBalance.toFixed(2) + "):");
+        let amt = prompt("Enter amount to send (Balance: " + currentBalance.toFixed(2) + " " + cur + "):");
         if(!amt) return;
         const sendAmount = parseFloat(amt);
         if (isNaN(sendAmount) || sendAmount <= 0) { alert("Invalid amount."); return; }
@@ -173,7 +175,8 @@
             id: 'tx_' + Math.random().toString(36).substr(2, 9),
             timestamp: Date.now(),
             amount: sendAmount.toFixed(2),
-            asset: activeAccount
+            asset: activeAccount,
+            currency: cur
         };
         document.getElementById('dashboardView').classList.add('hidden');
         document.getElementById('pairingView').classList.remove('hidden');
@@ -202,10 +205,11 @@
                     let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
                     usedTxs.push(tx.id);
                     localStorage.setItem("Tiffy_Used_TXs", JSON.stringify(usedTxs));
-                    const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
+                    
+                    const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage_" + tx.currency;
                     localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
                     loadBalances();
-                    alert("Confirmed: Received " + tx.amount + " " + tx.asset.toUpperCase());
+                    alert("Confirmed: Received " + tx.amount + " " + tx.currency);
                 }
             } catch(e) { alert("Invalid or corrupted QR data."); }
         }
@@ -234,11 +238,7 @@
             { facingMode: "environment" }, 
             { fps: 10, qrbox: 250 }, 
             (data) => {
-                activeScanner.stop().then(() => {
-                    processQRData(data);
-                }).catch(() => {
-                    processQRData(data);
-                });
+                activeScanner.stop().then(() => { processQRData(data); }).catch(() => { processQRData(data); });
             }
         );
     }
