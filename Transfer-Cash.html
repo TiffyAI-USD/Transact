@@ -84,6 +84,7 @@
 <script>
     let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
     const CURRENCIES = ["USD", "ZAR", "EUR", "NGN", "INR", "CNY", "AUD"];
+    const RATES = [1.0, 18.5, 0.92, 1500.0, 83.0, 7.20, 1.5];
 
     function isTxValid(txId, timestamp) {
         const now = Date.now();
@@ -94,21 +95,7 @@
         return { valid: true };
     }
 
-    function initUI() { 
-        // MIGRATION FIX: If old balance exists but new bucket is empty, move the money
-        let oldBal = localStorage.getItem("TUSD_Nitro_Storage");
-        if(oldBal) {
-            let defaultCur = CURRENCIES[0]; // USD
-            let newKey = "TUSD_Nitro_Storage_" + defaultCur;
-            if(!localStorage.getItem(newKey)) {
-                localStorage.setItem(newKey, oldBal);
-                localStorage.removeItem("TUSD_Nitro_Storage");
-            }
-        }
-        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); 
-        setActiveAccount('nitro'); 
-    }
-
+    function initUI() { if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); setActiveAccount('nitro'); }
     function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
     function clearPin() { currentPin = ""; updateDots(); }
     function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
@@ -122,12 +109,11 @@
             return;
         }
         localStorage.setItem("User_Access_PIN", userPin);
-        let cur = CURRENCIES[currIdx];
-        let currentBal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage_" + cur) || "0");
-        localStorage.setItem("TUSD_Nitro_Storage_" + cur, (currentBal + 70).toFixed(2));
+        let currentBal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
+        localStorage.setItem("TUSD_Nitro_Storage", (currentBal + 70).toFixed(2));
         localStorage.setItem("Tiffy_PIN_Locked", "true");
         document.getElementById('changePinBtn').classList.add('hidden');
-        alert("Success! Your PIN is set. $70 added to your " + cur + " wallet.");
+        alert("Success! Your PIN is set. $70 added to your wallet.");
         loadBalances();
     }
 
@@ -151,45 +137,43 @@
     }
 
     function loadBalances() {
-        let cur = CURRENCIES[currIdx];
+        let rate = RATES[currIdx];
         let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
-        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage_" + cur) || "0.00");
+        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
         
-        document.getElementById('tokenDisplay').innerText = tokens.toFixed(2);
-        document.getElementById('nitroDisplay').innerText = nitro.toFixed(2);
+        document.getElementById('tokenDisplay').innerText = (tokens * rate).toFixed(2);
+        document.getElementById('nitroDisplay').innerText = (nitro * rate).toFixed(2);
         
         let displayVal = (activeAccount === 'tokens' ? tokens : nitro);
-        document.getElementById('totalBalanceDisplay').innerText = displayVal.toFixed(2) + " " + cur;
+        document.getElementById('totalBalanceDisplay').innerText = (displayVal * rate).toFixed(2) + " " + CURRENCIES[currIdx];
     }
 
     function collectEarnings() {
         let utility = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
         if (utility > 0) {
-            let cur = CURRENCIES[currIdx];
-            let key = "TUSD_Nitro_Storage_" + cur;
-            localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + (utility * 20)).toFixed(2));
+            localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + (utility * 20)).toFixed(2));
             localStorage.setItem("Tiffy_Harvest_Pending", "0.00");
             loadBalances();
-            alert("Earnings collected into " + cur + " wallet!");
+            alert("Earnings collected!");
         }
     }
 
     function openTapToPayMode() {
-        let cur = CURRENCIES[currIdx];
-        const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage_" + cur;
-        const currentBalance = parseFloat(localStorage.getItem(key) || "0.00");
-        let amt = prompt("Enter amount to send (Balance: " + currentBalance.toFixed(2) + " " + cur + "):");
+        let rate = RATES[currIdx];
+        const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
+        const bal = parseFloat(localStorage.getItem(key) || "0.00");
+        let amt = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + (bal * rate).toFixed(2) + "):");
         if(!amt) return;
-        const sendAmount = parseFloat(amt);
-        if (isNaN(sendAmount) || sendAmount <= 0) { alert("Invalid amount."); return; }
-        if (sendAmount > currentBalance) { alert("Insufficient funds!"); return; }
+        let val = parseFloat(amt) / rate;
+        if (isNaN(val) || val <= 0) { alert("Invalid amount."); return; }
+        if (val > bal) { alert("Insufficient funds!"); return; }
         
         const txData = {
             id: 'tx_' + Math.random().toString(36).substr(2, 9),
             timestamp: Date.now(),
-            amount: sendAmount.toFixed(2),
+            amount: val.toFixed(2),
             asset: activeAccount,
-            currency: cur
+            currency: CURRENCIES[currIdx]
         };
         document.getElementById('dashboardView').classList.add('hidden');
         document.getElementById('pairingView').classList.remove('hidden');
@@ -218,8 +202,7 @@
                     let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
                     usedTxs.push(tx.id);
                     localStorage.setItem("Tiffy_Used_TXs", JSON.stringify(usedTxs));
-                    
-                    const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage_" + tx.currency;
+                    const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
                     localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
                     loadBalances();
                     alert("Confirmed: Received " + tx.amount + " " + tx.currency);
