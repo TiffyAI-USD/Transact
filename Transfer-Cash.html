@@ -136,11 +136,11 @@
         } else { alert("Access Denied"); clearPin(); }
     }
 
-    // UPDATED LOAD BALANCES
+    // FIXED: Math is calculated on the fly for UI only. Storage stays pure USD base.
     function loadBalances() {
         let rate = RATES[currIdx];
-        let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
-        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
+        let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0");
+        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
         
         document.getElementById('tokenDisplay').innerText = (tokens * rate).toFixed(2);
         document.getElementById('nitroDisplay').innerText = (nitro * rate).toFixed(2);
@@ -150,31 +150,31 @@
     }
 
     function collectEarnings() {
-        let utility = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
+        let utility = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0");
         if (utility > 0) {
             localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + (utility * 20)).toFixed(2));
-            localStorage.setItem("Tiffy_Harvest_Pending", "0.00");
+            localStorage.setItem("Tiffy_Harvest_Pending", "0");
             loadBalances();
             alert("Earnings collected!");
         }
     }
 
-    // UPDATED TAP TO PAY WITH CONVERSION
+    // FIXED: Precision is maintained by rounding to integer cents before storage.
     function openTapToPayMode() {
         let rate = RATES[currIdx];
         const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
-        const bal = parseFloat(localStorage.getItem(key) || "0.00");
+        const bal = parseFloat(localStorage.getItem(key) || "0");
         let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + (bal * rate).toFixed(2) + "):");
         if(!amtStr) return;
         let amt = parseFloat(amtStr);
-        let val = amt / rate; // Convert local currency input back to USD base for storage
+        let val = Math.round((amt / rate) * 100) / 100; // Force precision to 2 decimal places
         if (isNaN(val) || val <= 0) { alert("Invalid amount."); return; }
         if (val > bal) { alert("Insufficient funds!"); return; }
         
         const txData = {
             id: 'tx_' + Math.random().toString(36).substr(2, 9),
             timestamp: Date.now(),
-            amount: val.toFixed(2), // Stored as USD base
+            amount: val.toFixed(2),
             asset: activeAccount,
             currency: CURRENCIES[currIdx]
         };
@@ -206,9 +206,11 @@
                     usedTxs.push(tx.id);
                     localStorage.setItem("Tiffy_Used_TXs", JSON.stringify(usedTxs));
                     const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
-                    localStorage.setItem(key, (parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)).toFixed(2));
+                    // FIXED: Ensure addition keeps pure base precision
+                    let newBal = Math.round((parseFloat(localStorage.getItem(key) || "0") + parseFloat(tx.amount)) * 100) / 100;
+                    localStorage.setItem(key, newBal.toFixed(2));
                     loadBalances();
-                    alert("Confirmed: Received " + tx.amount + " (USD base)");
+                    alert("Confirmed: Received " + tx.amount + " " + tx.currency);
                 }
             } catch(e) { alert("Invalid or corrupted QR data."); }
         }
