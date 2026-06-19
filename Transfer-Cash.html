@@ -82,18 +82,9 @@
 </div>
 
 <script>
-    // --- DIAGNOSTIC INTERCEPTOR ---
-    const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function(key, value) {
-        if(key === "TUSD_Nitro_Storage") {
-            console.log("Updating " + key + ": " + value);
-        }
-        originalSetItem.apply(this, arguments);
-    };
-
     let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
     const CURRENCIES = [
-        {name: "USD", rate: 1.0}, {name: "ZAR", rate: 19.50}, {name: "EUR", rate: 0.92},
+        {name: "USD", rate: 1.0}, {name: "ZAR", rate: 1.0}, {name: "EUR", rate: 0.92},
         {name: "NGN", rate: 1500.0}, {name: "INR", rate: 83.0}, {name: "CNY", rate: 7.20},
         {name: "AUD", rate: 1.50}
     ];
@@ -160,9 +151,8 @@
 
     function collectEarnings() {
         let utility = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
-        let currentNitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0.00");
         if (utility > 0) {
-            localStorage.setItem("TUSD_Nitro_Storage", (currentNitro + utility).toFixed(2));
+            localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + (utility * 20)).toFixed(2));
             localStorage.setItem("Tiffy_Harvest_Pending", "0.00");
             loadBalances();
             alert("Earnings collected!");
