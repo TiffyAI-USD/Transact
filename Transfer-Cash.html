@@ -73,61 +73,21 @@
 </div>
 
 <script>
-    let activeScanner = null;
-    let currentPin = "";
-    let activeAccount = "nitro";
-    let currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
+    let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
     const CURRENCIES = ["USD", "ZAR", "EUR", "NGN", "INR", "CNY", "AUD"];
     const RATES = [1.0, 18.5, 0.92, 1500.0, 83.0, 7.20, 1.5];
 
-    function isTxValid(txId, timestamp) {
-        const now = Date.now();
-        const twentyFourHours = 24 * 60 * 60 * 1000;
-        if (now - timestamp > twentyFourHours) {
-            return { valid: false, msg: "QR Code expired (24h limit)." };
-        }
-        let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
-        if (usedTxs.includes(txId)) {
-            return { valid: false, msg: "This QR code has already been used." };
-        }
-        return { valid: true };
-    }
-
-    function initUI() { 
-        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") {
-            document.getElementById('changePinBtn').classList.add('hidden');
-        }
-        setActiveAccount('nitro'); 
-    }
-    
-    function inputPin(n) { 
-        if(currentPin.length < 6) { 
-            currentPin += n; 
-            updateDots(); 
-        } 
-    }
-    
-    function clearPin() { 
-        currentPin = ""; 
-        updateDots(); 
-    }
-    
-    function updateDots() { 
-        document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); 
-    }
-    
-    function cycleCurrency() { 
-        currIdx = (currIdx + 1) % CURRENCIES.length; 
-        localStorage.setItem("Tiffy_Pref_Currency", currIdx); 
-        loadBalances(); 
-    }
+    function initUI() { if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); setActiveAccount('nitro'); }
+    function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
+    function clearPin() { currentPin = ""; updateDots(); }
+    function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
+    function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; localStorage.setItem("Tiffy_Pref_Currency", currIdx); loadBalances(); }
 
     function setInitialPin() {
         const userPin = prompt("Enter a new 4-6 digit PIN:", "");
         if (!userPin || userPin.length < 4) return;
         localStorage.setItem("User_Access_PIN", userPin);
-        let nitroBal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
-        localStorage.setItem("TUSD_Nitro_Storage", (nitroBal + 70).toFixed(2));
+        localStorage.setItem("TUSD_Nitro_Storage", "70.00");
         localStorage.setItem("Tiffy_PIN_Locked", "true");
         document.getElementById('changePinBtn').classList.add('hidden');
         loadBalances();
@@ -147,12 +107,10 @@
             document.getElementById('authView').classList.add('hidden');
             document.getElementById('dashboardView').classList.remove('hidden');
             loadBalances();
-        } else { 
-            alert("Access Denied"); 
-            clearPin(); 
-        }
+        } else { alert("Access Denied"); clearPin(); }
     }
 
+    // Always calculate display from the invariant USD base
     function loadBalances() {
         let rate = RATES[currIdx];
         let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0");
@@ -176,33 +134,24 @@
     function openTapToPayMode() {
         const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
         let rate = RATES[currIdx];
-        let balInBase = parseFloat(localStorage.getItem(key) || "0");
-        let displayBal = (balInBase * rate).toFixed(2);
+        let baseVal = parseFloat(localStorage.getItem(key) || "0");
+        let displayBal = baseVal * rate;
         
-        let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + displayBal + "):");
+        let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + displayBal.toFixed(2) + "):");
         if(!amtStr) return;
-        let amt = parseFloat(amtStr);
-        if (isNaN(amt) || amt <= 0) { alert("Invalid amount."); return; }
-        if (amt > parseFloat(displayBal)) { alert("Insufficient funds!"); return; }
+        let amtDisplay = parseFloat(amtStr);
         
-        let newDisplayBal = parseFloat(displayBal) - amt;
-        localStorage.setItem(key, (newDisplayBal / rate).toString());
+        if (isNaN(amtDisplay) || amtDisplay <= 0 || amtDisplay > displayBal) { alert("Invalid/Insufficient."); return; }
         
-        const txData = { amount: amt.toFixed(2), currency: CURRENCIES[currIdx], asset: activeAccount, timestamp: Date.now() };
+        // Subtract from base USD using the exact rate
+        let amtInUSD = amtDisplay / rate;
+        localStorage.setItem(key, (baseVal - amtInUSD).toString());
+        
+        const txData = { amount: amtDisplay.toFixed(2), currency: CURRENCIES[currIdx], asset: activeAccount, timestamp: Date.now() };
         document.getElementById('dashboardView').classList.add('hidden');
         document.getElementById('pairingView').classList.remove('hidden');
         QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify(txData)));
         loadBalances();
-    }
-
-    async function shareTransaction() {
-        const canvas = document.getElementById('qrcode');
-        try {
-            const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-            const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
-            if (navigator.share) await navigator.share({title: 'Tiffy AI', files: [file]});
-            else alert("Share feature not supported.");
-        } catch (e) { alert("Share error."); }
     }
 
     function processQRData(data) {
@@ -212,11 +161,11 @@
                 const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
                 
                 let currentBase = parseFloat(localStorage.getItem(key) || "0");
-                let currentRate = RATES[CURRENCIES.indexOf(tx.currency)];
-                let displayVal = currentBase * currentRate;
+                let txRate = RATES[CURRENCIES.indexOf(tx.currency)];
                 
-                let newDisplayVal = displayVal + parseFloat(tx.amount);
-                localStorage.setItem(key, (newDisplayVal / currentRate).toString());
+                // Add to base USD by converting the transaction currency back to USD
+                let amtInUSD = parseFloat(tx.amount) / txRate;
+                localStorage.setItem(key, (currentBase + amtInUSD).toString());
                 
                 loadBalances();
                 alert("Confirmed: Received " + tx.amount + " " + tx.currency);
@@ -225,43 +174,24 @@
         stopScanner();
     }
 
+    async function shareTransaction() {
+        const canvas = document.getElementById('qrcode');
+        canvas.toBlob(blob => {
+            const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
+            if (navigator.share) navigator.share({files: [file]});
+        });
+    }
+
     function handleFileUpload(e) {
         const file = e.target.files[0];
         if(!file) return;
         const scanner = new Html5Qrcode("camera-viewfinder");
-        scanner.scanFile(file, true).then(data => { 
-            e.target.value = ''; 
-            scanner.clear(); 
-            processQRData(data); 
-        }).catch(() => { 
-            alert("Error reading QR."); 
-            scanner.clear(); 
-        });
+        scanner.scanFile(file, true).then(data => { e.target.value = ''; scanner.clear(); processQRData(data); }).catch(() => { alert("Error."); scanner.clear(); });
     }
 
-    function activateScanner() { 
-        document.getElementById('dashboardView').classList.add('hidden'); 
-        document.getElementById('scannerView').classList.remove('hidden'); 
-        activeScanner = new Html5Qrcode("camera-viewfinder"); 
-        activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => { 
-            activeScanner.stop().then(() => processQRData(data)); 
-        }); 
-    }
-
-    function stopScanner() { 
-        if(activeScanner) {
-            activeScanner.stop().then(exitMode).catch(exitMode); 
-        } else {
-            exitMode(); 
-        }
-    }
-    
-    function exitMode() { 
-        document.getElementById('pairingView').classList.add('hidden'); 
-        document.getElementById('scannerView').classList.add('hidden'); 
-        document.getElementById('dashboardView').classList.remove('hidden'); 
-        loadBalances(); 
-    }
+    function activateScanner() { document.getElementById('dashboardView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden', false); document.getElementById('scannerView').classList.remove('hidden'); activeScanner = new Html5Qrcode("camera-viewfinder"); activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => { activeScanner.stop().then(() => processQRData(data)); }); }
+    function stopScanner() { if(activeScanner) activeScanner.stop().then(exitMode).catch(exitMode); else exitMode(); }
+    function exitMode() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); loadBalances(); }
 </script>
 </body>
 </html>
