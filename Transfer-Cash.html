@@ -58,35 +58,76 @@
         <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">MENU</button>
     </div>
 
-    <div id="pairingView" class="hidden"><canvas id="qrcode"></canvas><div class="share-container"><button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button></div><button class="action-panel-btn" onclick="exitMode()">BACK</button></div>
-    <div id="scannerView" class="hidden"><div class="viewfinder-wrapper" id="camera-viewfinder"></div><input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleFileUpload(event)"><button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="document.getElementById('qr-file-input').click()">UPLOAD QR IMAGE</button><button class="action-panel-btn" onclick="stopScanner()">CANCEL</button></div>
+    <div id="pairingView" class="hidden">
+        <canvas id="qrcode"></canvas>
+        <div class="share-container"><button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button></div>
+        <button class="action-panel-btn" onclick="exitMode()">BACK</button>
+    </div>
+    
+    <div id="scannerView" class="hidden">
+        <div class="viewfinder-wrapper" id="camera-viewfinder"></div>
+        <input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
+        <button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="document.getElementById('qr-file-input').click()">UPLOAD QR IMAGE</button>
+        <button class="action-panel-btn" onclick="stopScanner()">CANCEL</button>
+    </div>
 </div>
 
 <script>
-    let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
+    let activeScanner = null;
+    let currentPin = "";
+    let activeAccount = "nitro";
+    let currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
     const CURRENCIES = ["USD", "ZAR", "EUR", "NGN", "INR", "CNY", "AUD"];
     const RATES = [1.0, 18.5, 0.92, 1500.0, 83.0, 7.20, 1.5];
 
     function isTxValid(txId, timestamp) {
         const now = Date.now();
         const twentyFourHours = 24 * 60 * 60 * 1000;
-        if (now - timestamp > twentyFourHours) return { valid: false, msg: "QR Code expired (24h limit)." };
+        if (now - timestamp > twentyFourHours) {
+            return { valid: false, msg: "QR Code expired (24h limit)." };
+        }
         let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
-        if (usedTxs.includes(txId)) return { valid: false, msg: "This QR code has already been used." };
+        if (usedTxs.includes(txId)) {
+            return { valid: false, msg: "This QR code has already been used." };
+        }
         return { valid: true };
     }
 
-    function initUI() { if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); setActiveAccount('nitro'); }
-    function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
-    function clearPin() { currentPin = ""; updateDots(); }
-    function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
-    function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; localStorage.setItem("Tiffy_Pref_Currency", currIdx); loadBalances(); }
+    function initUI() { 
+        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") {
+            document.getElementById('changePinBtn').classList.add('hidden');
+        }
+        setActiveAccount('nitro'); 
+    }
+    
+    function inputPin(n) { 
+        if(currentPin.length < 6) { 
+            currentPin += n; 
+            updateDots(); 
+        } 
+    }
+    
+    function clearPin() { 
+        currentPin = ""; 
+        updateDots(); 
+    }
+    
+    function updateDots() { 
+        document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); 
+    }
+    
+    function cycleCurrency() { 
+        currIdx = (currIdx + 1) % CURRENCIES.length; 
+        localStorage.setItem("Tiffy_Pref_Currency", currIdx); 
+        loadBalances(); 
+    }
 
     function setInitialPin() {
         const userPin = prompt("Enter a new 4-6 digit PIN:", "");
         if (!userPin || userPin.length < 4) return;
         localStorage.setItem("User_Access_PIN", userPin);
-        localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + 70).toFixed(2));
+        let nitroBal = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
+        localStorage.setItem("TUSD_Nitro_Storage", (nitroBal + 70).toFixed(2));
         localStorage.setItem("Tiffy_PIN_Locked", "true");
         document.getElementById('changePinBtn').classList.add('hidden');
         loadBalances();
@@ -106,7 +147,10 @@
             document.getElementById('authView').classList.add('hidden');
             document.getElementById('dashboardView').classList.remove('hidden');
             loadBalances();
-        } else { alert("Access Denied"); clearPin(); }
+        } else { 
+            alert("Access Denied"); 
+            clearPin(); 
+        }
     }
 
     function loadBalances() {
@@ -138,8 +182,14 @@
         let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + displayBal + "):");
         if(!amtStr) return;
         let amt = parseFloat(amtStr);
-        if (isNaN(amt) || amt <= 0) { alert("Invalid amount."); return; }
-        if (amt > parseFloat(displayBal)) { alert("Insufficient funds!"); return; }
+        if (isNaN(amt) || amt <= 0) { 
+            alert("Invalid amount."); 
+            return; 
+        }
+        if (amt > parseFloat(displayBal)) { 
+            alert("Insufficient funds!"); 
+            return; 
+        }
         
         let newDisplayBal = parseFloat(displayBal) - amt;
         localStorage.setItem(key, (newDisplayBal / rate).toFixed(2));
@@ -184,12 +234,39 @@
         const file = e.target.files[0];
         if(!file) return;
         const scanner = new Html5Qrcode("camera-viewfinder");
-        scanner.scanFile(file, true).then(data => { e.target.value = ''; scanner.clear(); processQRData(data); }).catch(() => { alert("Error reading QR."); scanner.clear(); });
+        scanner.scanFile(file, true).then(data => { 
+            e.target.value = ''; 
+            scanner.clear(); 
+            processQRData(data); 
+        }).catch(() => { 
+            alert("Error reading QR."); 
+            scanner.clear(); 
+        });
     }
 
-    function activateScanner() { document.getElementById('dashboardView').classList.add('hidden'); document.getElementById('scannerView').classList.remove('hidden'); activeScanner = new Html5Qrcode("camera-viewfinder"); activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => { activeScanner.stop().then(() => processQRData(data)); }); }
-    function stopScanner() { if(activeScanner) activeScanner.stop().then(exitMode).catch(exitMode); else exitMode(); }
-    function exitMode() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); loadBalances(); }
+    function activateScanner() { 
+        document.getElementById('dashboardView').classList.add('hidden'); 
+        document.getElementById('scannerView').classList.remove('hidden'); 
+        activeScanner = new Html5Qrcode("camera-viewfinder"); 
+        activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => { 
+            activeScanner.stop().then(() => processQRData(data)); 
+        }); 
+    }
+
+    function stopScanner() { 
+        if(activeScanner) {
+            activeScanner.stop().then(exitMode).catch(exitMode); 
+        } else {
+            exitMode(); 
+        }
+    }
+    
+    function exitMode() { 
+        document.getElementById('pairingView').classList.add('hidden'); 
+        document.getElementById('scannerView').classList.add('hidden'); 
+        document.getElementById('dashboardView').classList.remove('hidden'); 
+        loadBalances(); 
+    }
 </script>
 </body>
 </html>
