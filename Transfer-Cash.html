@@ -58,18 +58,8 @@
         <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Dream-Menu/'">MENU</button>
     </div>
 
-    <div id="pairingView" class="hidden">
-        <canvas id="qrcode"></canvas>
-        <div class="share-container"><button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button></div>
-        <button class="action-panel-btn" onclick="exitMode()">BACK</button>
-    </div>
-    
-    <div id="scannerView" class="hidden">
-        <div class="viewfinder-wrapper" id="camera-viewfinder"></div>
-        <input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
-        <button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="document.getElementById('qr-file-input').click()">UPLOAD QR IMAGE</button>
-        <button class="action-panel-btn" onclick="stopScanner()">CANCEL</button>
-    </div>
+    <div id="pairingView" class="hidden"><canvas id="qrcode"></canvas><div class="share-container"><button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button></div><button class="action-panel-btn" onclick="exitMode()">BACK</button></div>
+    <div id="scannerView" class="hidden"><div class="viewfinder-wrapper" id="camera-viewfinder"></div><input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleFileUpload(event)"><button class="action-panel-btn" style="background:var(--electric-blue); color:#000;" onclick="document.getElementById('qr-file-input').click()">UPLOAD QR IMAGE</button><button class="action-panel-btn" onclick="stopScanner()">CANCEL</button></div>
 </div>
 
 <script>
@@ -141,17 +131,18 @@
 
     function openTapToPayMode() {
         const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
-        let bal = parseFloat(localStorage.getItem(key) || "0");
         let rate = RATES[currIdx];
-        let displayBal = (bal * rate).toFixed(2);
+        let balInBase = parseFloat(localStorage.getItem(key) || "0");
+        let displayBal = (balInBase * rate).toFixed(2);
         
         let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + displayBal + "):");
         if(!amtStr) return;
         let amt = parseFloat(amtStr);
         if (isNaN(amt) || amt <= 0) { alert("Invalid amount."); return; }
-        if (amt > displayBal) { alert("Insufficient funds!"); return; }
+        if (amt > parseFloat(displayBal)) { alert("Insufficient funds!"); return; }
         
-        localStorage.setItem(key, (bal - (amt / rate)).toFixed(2));
+        let newDisplayBal = parseFloat(displayBal) - amt;
+        localStorage.setItem(key, (newDisplayBal / rate).toFixed(2));
         
         const txData = { amount: amt.toFixed(2), currency: CURRENCIES[currIdx], asset: activeAccount, timestamp: Date.now() };
         document.getElementById('dashboardView').classList.add('hidden');
@@ -175,10 +166,13 @@
             try {
                 const tx = JSON.parse(atob(data.split(":")[1]));
                 const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
-                let currentBal = parseFloat(localStorage.getItem(key) || "0");
-                let txRate = RATES[CURRENCIES.indexOf(tx.currency)];
+                let currentBase = parseFloat(localStorage.getItem(key) || "0");
+                let currentRate = RATES[CURRENCIES.indexOf(tx.currency)];
+                let displayVal = currentBase * currentRate;
                 
-                localStorage.setItem(key, (currentBal + (parseFloat(tx.amount) / txRate)).toFixed(2));
+                let newDisplayVal = displayVal + parseFloat(tx.amount);
+                localStorage.setItem(key, (newDisplayVal / currentRate).toFixed(2));
+                
                 loadBalances();
                 alert("Confirmed: Received " + tx.amount + " " + tx.currency);
             } catch(e) { alert("Invalid QR"); }
@@ -193,21 +187,9 @@
         scanner.scanFile(file, true).then(data => { e.target.value = ''; scanner.clear(); processQRData(data); }).catch(() => { alert("Error reading QR."); scanner.clear(); });
     }
 
-    function activateScanner() { 
-        document.getElementById('dashboardView').classList.add('hidden'); 
-        document.getElementById('scannerView').classList.remove('hidden'); 
-        activeScanner = new Html5Qrcode("camera-viewfinder"); 
-        activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => { activeScanner.stop().then(() => processQRData(data)); }); 
-    }
-
+    function activateScanner() { document.getElementById('dashboardView').classList.add('hidden'); document.getElementById('scannerView').classList.remove('hidden'); activeScanner = new Html5Qrcode("camera-viewfinder"); activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (data) => { activeScanner.stop().then(() => processQRData(data)); }); }
     function stopScanner() { if(activeScanner) activeScanner.stop().then(exitMode).catch(exitMode); else exitMode(); }
-    
-    function exitMode() { 
-        document.getElementById('pairingView').classList.add('hidden'); 
-        document.getElementById('scannerView').classList.add('hidden'); 
-        document.getElementById('dashboardView').classList.remove('hidden'); 
-        loadBalances(); 
-    }
+    function exitMode() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); loadBalances(); }
 </script>
 </body>
 </html>
