@@ -80,15 +80,6 @@
     const CURRENCIES = ["USD", "ZAR", "EUR", "NGN", "INR", "CNY", "AUD"];
     const RATES = [1.0, 18.5, 0.92, 1500.0, 83.0, 7.20, 1.5];
 
-    function isTxValid(txId, timestamp) {
-        const now = Date.now();
-        const twentyFourHours = 24 * 60 * 60 * 1000;
-        if (now - timestamp > twentyFourHours) return { valid: false, msg: "QR Code expired (24h limit)." };
-        let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
-        if (usedTxs.includes(txId)) return { valid: false, msg: "This QR code has already been used." };
-        return { valid: true };
-    }
-
     function initUI() { 
         if(localStorage.getItem("Tiffy_PIN_Locked") === "true") {
             document.getElementById('changePinBtn').classList.add('hidden');
@@ -110,7 +101,7 @@
         const userPin = prompt("Enter a new 4-6 digit PIN:", "");
         if (!userPin || userPin.length < 4) return;
         localStorage.setItem("User_Access_PIN", userPin);
-        localStorage.setItem("TUSD_Nitro_Storage", "70.00");
+        if (!localStorage.getItem("TUSD_Nitro_Storage")) localStorage.setItem("TUSD_Nitro_Storage", "70.00");
         localStorage.setItem("Tiffy_PIN_Locked", "true");
         document.getElementById('changePinBtn').classList.add('hidden');
         loadBalances();
@@ -135,8 +126,8 @@
 
     function loadBalances() {
         let rate = RATES[currIdx];
-        let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0") || 0;
-        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") || 0;
+        let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0");
+        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
         document.getElementById('tokenDisplay').innerText = (tokens * rate).toFixed(2);
         document.getElementById('nitroDisplay').innerText = (nitro * rate).toFixed(2);
         let baseVal = (activeAccount === 'tokens' ? tokens : nitro);
@@ -144,7 +135,7 @@
     }
 
     function collectEarnings() {
-        let utility = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0") || 0;
+        let utility = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0");
         if (utility > 0) {
             localStorage.setItem("TUSD_Nitro_Storage", (parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0") + (utility * 20)).toFixed(2));
             localStorage.setItem("Tiffy_Harvest_Pending", "0");
@@ -156,15 +147,16 @@
     function openTapToPayMode() {
         const key = activeAccount === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
         let rate = RATES[currIdx];
-        let baseVal = parseFloat(localStorage.getItem(key) || "0") || 0;
-        let displayBal = baseVal * rate;
+        let currentBase = parseFloat(localStorage.getItem(key) || "0");
+        let currentDisplayBal = currentBase * rate;
         
-        let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + displayBal.toFixed(2) + "):");
+        let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + currentDisplayBal.toFixed(2) + "):");
         if(!amtStr) return;
         let amtLocal = parseFloat(amtStr);
-        if (isNaN(amtLocal) || amtLocal <= 0 || amtLocal > displayBal) { alert("Invalid/Insufficient."); return; }
+        if (isNaN(amtLocal) || amtLocal <= 0 || amtLocal > currentDisplayBal) { alert("Invalid/Insufficient."); return; }
         
-        let newBase = (displayBal - amtLocal) / rate;
+        // Math happens in local currency: (CurrentLocalBalance - SaleAmount) / Rate
+        let newBase = (currentDisplayBal - amtLocal) / rate;
         localStorage.setItem(key, newBase.toString());
         
         const txData = { amount: amtLocal.toFixed(2), currency: CURRENCIES[currIdx], asset: activeAccount, timestamp: Date.now() };
@@ -189,10 +181,14 @@
             try {
                 const tx = JSON.parse(atob(data.split(":")[1]));
                 const key = tx.asset === 'tokens' ? "Tiffy_Harvest_Pending" : "TUSD_Nitro_Storage";
+                
                 let txRate = RATES[CURRENCIES.indexOf(tx.currency)];
-                let currentBase = parseFloat(localStorage.getItem(key) || "0") || 0;
+                let currentBase = parseFloat(localStorage.getItem(key) || "0");
+                
+                // Add to base by converting incoming amount back to Base units
                 let addedBase = parseFloat(tx.amount) / txRate;
                 localStorage.setItem(key, (currentBase + addedBase).toString());
+                
                 loadBalances();
                 alert("Confirmed: Received " + tx.amount + " " + tx.currency);
             } catch(e) { alert("Invalid QR"); }
