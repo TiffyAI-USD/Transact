@@ -87,15 +87,9 @@
         setActiveAccount('nitro'); 
     }
     
-    function inputPin(n) { 
-        if(currentPin.length < 6) { currentPin += n; updateDots(); } 
-    }
-    
+    function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
     function clearPin() { currentPin = ""; updateDots(); }
-    
-    function updateDots() { 
-        document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); 
-    }
+    function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
     
     function cycleCurrency() { 
         currIdx = (currIdx + 1) % CURRENCIES.length; 
@@ -157,12 +151,12 @@
         let balInBase = parseFloat(localStorage.getItem(key) || "0");
         let displayBal = (balInBase * rate).toFixed(2);
         
-        let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Balance: " + displayBal + "):");
+        let amtStr = prompt("Enter amount in " + CURRENCIES[currIdx] + " (Current Balance: " + displayBal + "):");
         if(!amtStr) return;
         let amt = parseFloat(amtStr);
         if (isNaN(amt) || amt <= 0 || amt > parseFloat(displayBal)) { alert("Invalid amount or insufficient funds."); return; }
         
-        // Correct math: Convert display-amount back to base, then subtract
+        // CRITICAL MATH: Convert the local amount BACK to base currency before subtracting
         let baseAmountToSubtract = amt / rate;
         localStorage.setItem(key, (balInBase - baseAmountToSubtract).toFixed(2));
         
@@ -193,7 +187,7 @@
                 let txCurrencyIdx = CURRENCIES.indexOf(tx.currency);
                 let txRate = RATES[txCurrencyIdx];
                 
-                // Convert incoming amount (in its original currency) to base before adding
+                // CRITICAL MATH: Convert the incoming amount (in its native currency) to base before adding
                 let baseAmountToAdd = parseFloat(tx.amount) / txRate;
                 localStorage.setItem(key, (currentBase + baseAmountToAdd).toFixed(2));
                 
