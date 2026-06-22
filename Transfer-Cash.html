@@ -77,6 +77,8 @@
     let currentPin = "";
     let activeAccount = "nitro";
     let currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
+    
+    // SYNCED WITH WEBSTORE RATES
     const CURRENCIES = ["USD", "ZAR", "EUR", "NGN", "INR", "CNY", "AUD"];
     const RATES = [1.0, 18.5, 0.92, 1500.0, 83.0, 7.20, 1.5];
 
@@ -118,14 +120,17 @@
         } else { alert("Access Denied"); clearPin(); }
     }
 
+    // FIXED: Load Balances reads base USD and only displays local, preserving storage
     function loadBalances() {
         let rate = RATES[currIdx];
-        let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0");
-        let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
-        document.getElementById('tokenDisplay').innerText = (tokens * rate).toFixed(2);
-        document.getElementById('nitroDisplay').innerText = (nitro * rate).toFixed(2);
-        let baseVal = (activeAccount === 'tokens' ? tokens : nitro);
-        document.getElementById('totalBalanceDisplay').innerText = (baseVal * rate).toFixed(2) + " " + CURRENCIES[currIdx];
+        let tokensBase = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0");
+        let nitroBase = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
+        
+        document.getElementById('tokenDisplay').innerText = (tokensBase * rate).toFixed(2);
+        document.getElementById('nitroDisplay').innerText = (nitroBase * rate).toFixed(2);
+        
+        let activeBase = (activeAccount === 'tokens' ? tokensBase : nitroBase);
+        document.getElementById('totalBalanceDisplay').innerText = (activeBase * rate).toFixed(2) + " " + CURRENCIES[currIdx];
     }
 
     function collectEarnings() {
@@ -149,7 +154,6 @@
         let amt = parseFloat(amtStr);
         if (isNaN(amt) || amt <= 0 || amt > parseFloat(displayBal)) { alert("Invalid amount or insufficient funds."); return; }
         
-        // MATH FIXED: Divide by rate so Base Nitro remains the source of truth
         let baseAmountToSubtract = amt / rate;
         localStorage.setItem(key, (balInBase - baseAmountToSubtract).toFixed(2));
         
@@ -180,7 +184,6 @@
                 let txCurrencyIdx = CURRENCIES.indexOf(tx.currency);
                 let txRate = RATES[txCurrencyIdx];
                 
-                // MATH FIXED: Divide by rate so Base Nitro remains the source of truth
                 let baseAmountToAdd = parseFloat(tx.amount) / txRate;
                 localStorage.setItem(key, (currentBase + baseAmountToAdd).toFixed(2));
                 
