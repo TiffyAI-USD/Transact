@@ -122,11 +122,8 @@
         let rate = RATES[currIdx];
         let tokens = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0");
         let nitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
-        
-        // Display elements updated by multiplying the BASE storage value by the rate
         document.getElementById('tokenDisplay').innerText = (tokens * rate).toFixed(2);
         document.getElementById('nitroDisplay').innerText = (nitro * rate).toFixed(2);
-        
         let baseVal = (activeAccount === 'tokens' ? tokens : nitro);
         document.getElementById('totalBalanceDisplay').innerText = (baseVal * rate).toFixed(2) + " " + CURRENCIES[currIdx];
     }
@@ -152,6 +149,7 @@
         let amt = parseFloat(amtStr);
         if (isNaN(amt) || amt <= 0 || amt > parseFloat(displayBal)) { alert("Invalid amount or insufficient funds."); return; }
         
+        // MATH FIXED: Divide by rate so Base Nitro remains the source of truth
         let baseAmountToSubtract = amt / rate;
         localStorage.setItem(key, (balInBase - baseAmountToSubtract).toFixed(2));
         
@@ -182,6 +180,7 @@
                 let txCurrencyIdx = CURRENCIES.indexOf(tx.currency);
                 let txRate = RATES[txCurrencyIdx];
                 
+                // MATH FIXED: Divide by rate so Base Nitro remains the source of truth
                 let baseAmountToAdd = parseFloat(tx.amount) / txRate;
                 localStorage.setItem(key, (currentBase + baseAmountToAdd).toFixed(2));
                 
