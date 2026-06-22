@@ -81,21 +81,14 @@
     const RATES = [1.0, 18.5, 0.92, 1500.0, 83.0, 7.20, 1.5];
 
     function initUI() { 
-        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") {
-            document.getElementById('changePinBtn').classList.add('hidden');
-        }
+        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden');
         setActiveAccount('nitro'); 
     }
     
     function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
     function clearPin() { currentPin = ""; updateDots(); }
     function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
-    
-    function cycleCurrency() { 
-        currIdx = (currIdx + 1) % CURRENCIES.length; 
-        localStorage.setItem("Tiffy_Pref_Currency", currIdx); 
-        loadBalances(); 
-    }
+    function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; localStorage.setItem("Tiffy_Pref_Currency", currIdx); loadBalances(); }
 
     function setInitialPin() {
         const userPin = prompt("Enter a new 4-6 digit PIN:", "");
@@ -156,7 +149,7 @@
         let amt = parseFloat(amtStr);
         if (isNaN(amt) || amt <= 0 || amt > parseFloat(displayBal)) { alert("Invalid amount or insufficient funds."); return; }
         
-        // CRITICAL MATH: Convert the local amount BACK to base currency before subtracting
+        // --- MATH FIXED: Convert local transaction amount back to Base (USD) before storage update ---
         let baseAmountToSubtract = amt / rate;
         localStorage.setItem(key, (balInBase - baseAmountToSubtract).toFixed(2));
         
@@ -187,7 +180,7 @@
                 let txCurrencyIdx = CURRENCIES.indexOf(tx.currency);
                 let txRate = RATES[txCurrencyIdx];
                 
-                // CRITICAL MATH: Convert the incoming amount (in its native currency) to base before adding
+                // --- MATH FIXED: Convert incoming amount back to Base (USD) before storage update ---
                 let baseAmountToAdd = parseFloat(tx.amount) / txRate;
                 localStorage.setItem(key, (currentBase + baseAmountToAdd).toFixed(2));
                 
