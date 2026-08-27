@@ -41,10 +41,11 @@
             <button class="glass-btn" onclick="clearPin()">C</button><button class="glass-btn" onclick="inputPin(0)">0</button><button class="glass-btn" onclick="authenticate()">OK</button>
         </div>
         <button id="changePinBtn" class="action-panel-btn" onclick="setInitialPin()">Setup Secure PIN </button>
+        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=NVPAZWBES9WAS'">TOP-UP $10 WITH BANK CARD (PAYPAL)</button>
     </div>
 
     <div id="dashboardView" class="hidden">
-        <div class="brand-header">TIFFY INTERNATIONAL BANK</div>
+        <div class="brand-header">INTERNATIONAL BANKING TERMINAL</div>
         <div style="text-align: center; margin: 20px 0;">
             <div id="totalBalanceDisplay" style="font-size:32px; font-weight:800; cursor:pointer;" onclick="cycleCurrency()">$0.00 USD</div>
            
@@ -110,7 +111,6 @@
     function setInitialPin() {
         if (!localStorage.getItem("KYC_Verified_Hash")) {
             alert("VERIFICATION REQUIRED: Please complete your Business Registration and top up your account with at least $10.");
-            <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=NVPAZWBES9WAS'">TOP-UP $10 WITH BANK CARD (PAYPAL)</button>
             return;
         }
         const userPin = prompt("Enter a new 4-6 digit PIN to secure your wallet:", "");
