@@ -110,6 +110,7 @@
     function setInitialPin() {
         if (!localStorage.getItem("KYC_Verified_Hash")) {
             alert("VERIFICATION REQUIRED: Please complete your Business Registration and top up your account with at least $10.");
+            <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=NVPAZWBES9WAS'">TOP-UP $10 WITH BANK CARD (PAYPAL)</button>
             return;
         }
         const userPin = prompt("Enter a new 4-6 digit PIN to secure your wallet:", "");
