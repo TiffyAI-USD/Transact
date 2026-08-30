@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIFFY AI - Ultimate Gateway Terminal</title>
+   
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <style>
+        :root { --electric-blue: #00f0ff; --shocking-pink: #ff007f; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
+        body { margin: 0; background: url('set.jpg') center center/cover no-repeat fixed; font-family: 'Orbitron', sans-serif; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .terminal-frame { background: rgba(10, 15, 24, 0.75); border: 1px solid var(--electric-blue); padding: 25px; border-radius: 24px; width: 380px; max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto; box-shadow: 0 0 25px var(--electric-blue), inset 0 0 40px rgba(0, 240, 255, 0.2); }
+        .hidden { display: none !important; }
+        .brand-header { font-size: 18px; font-weight: 800; text-align: center; color: var(--electric-blue); margin-bottom: 20px; text-shadow: 0 0 10px var(--electric-blue); }
+        .action-panel-btn { background: var(--glass-bg); border: 1px solid var(--electric-blue); border-radius: 14px; padding: 14px; width: 100%; color: #fff; cursor: pointer; text-transform: uppercase; font-size: 11px; margin-top: 10px; font-family: 'Orbitron', sans-serif; box-shadow: 0 0 10px rgba(0, 240, 255, 0.3); transition: 0.3s; }
+        .action-panel-btn:hover { box-shadow: 0 0 15px var(--electric-blue); background: rgba(0, 240, 255, 0.1); }
+        #qrcode { background: #fff; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; width: 200px !important; height: 200px !important; box-shadow: 0 0 15px var(--electric-blue); }
+        .viewfinder-wrapper { width: 100%; min-height: 260px; background: #000; margin: 12px 0; border: 2px dashed var(--electric-blue); box-shadow: 0 0 10px var(--electric-blue); }
+        .share-container { text-align: center; margin-top: 10px; }
+        .share-btn { background: var(--electric-blue); color: #000; border: none; font-weight: bold; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 12px; width: 100%; text-transform: uppercase; box-shadow: 0 0 15px var(--electric-blue); }
+        
+        /* 2x2 Grid Layout for Accounts */
+        .accounts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 15px 0; }
+        .harvest-box { background: rgba(255,255,255,0.02); border: 2px solid var(--glass-border); border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .harvest-box.active { border-color: var(--electric-blue); background: rgba(0,240,255,0.1); box-shadow: 0 0 12px var(--electric-blue); }
+        
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #333; margin: 0 5px; box-shadow: 0 0 5px rgba(255,255,255,0.2); }
+        .dot.active { background: var(--electric-blue); box-shadow: 0 0 10px var(--electric-blue); }
+        .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+        .glass-btn { background: var(--glass-bg); border: 1px solid var(--electric-blue); color: #fff; padding: 15px 0; border-radius: 12px; cursor: pointer; text-align: center; box-shadow: 0 0 8px rgba(0, 240, 255, 0.2); transition: 0.3s; }
+        .glass-btn:hover { box-shadow: 0 0 12px var(--electric-blue); background: rgba(0, 240, 255, 0.1); }
+    </style>
+</head>
+<body onload="initUI()">
+
+<div class="terminal-frame">
+    <!-- AUTH VIEW -->
+    <div id="authView">
+        <div class="brand-header">SECURE ACCESS</div>
+        <div style="display:flex; justify-content:center; margin-bottom:15px;"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="pin-grid">
+            <button class="glass-btn" onclick="inputPin(1)">1</button><button class="glass-btn" onclick="inputPin(2)">2</button><button class="glass-btn" onclick="inputPin(3)">3</button>
+            <button class="glass-btn" onclick="inputPin(4)">4</button><button class="glass-btn" onclick="inputPin(5)">5</button><button class="glass-btn" onclick="inputPin(6)">6</button>
+            <button class="glass-btn" onclick="inputPin(7)">7</button><button class="glass-btn" onclick="inputPin(8)">8</button><button class="glass-btn" onclick="inputPin(9)">9</button>
+            <button class="glass-btn" onclick="clearPin()">C</button><button class="glass-btn" onclick="inputPin(0)">0</button><button class="glass-btn" onclick="authenticate()">OK</button>
+        </div>
+        <button id="changePinBtn" class="action-panel-btn" onclick="setInitialPin()">Setup Secure PIN</button>
+        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=NVPAZWBES9WAS'">TOP-UP $10 WITH BANK CARD (PAYPAL)</button>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboardView" class="hidden">
+        <div class="brand-header">INTERNATIONAL BANKING TERMINAL</div>
+        <div style="text-align: center; margin: 15px 0;">
+            <div id="totalBalanceDisplay" style="font-size:28px; font-weight:800; cursor:pointer; text-shadow: 0 0 10px var(--electric-blue);" onclick="cycleCurrency()">$0.00 USD</div>
+           
+            <!-- 2x2 Account Matrix -->
+            <div class="accounts-grid">
+                <!-- Top-Left: TiffyAI Tokens -->
+                <div class="harvest-box" id="box-terminal-tokens" onclick="setActiveAccount('terminal_tokens')">
+                    <p style="font-size:7px; color:#888; margin:0;">TiffyAI Tokens</p>
+                    <div id="terminalTokenDisplay" style="font-size:11px; font-weight:bold; margin-top:4px;">0.00</div>
+                </div>
+                <!-- Top-Right: TUSD-Nitro Terminal Money -->
+                <div class="harvest-box" id="box-nitro" onclick="setActiveAccount('nitro')">
+                    <p style="font-size:7px; color:#888; margin:0;">TUSD-Nitro Terminal</p>
+                    <div id="nitroDisplay" style="font-size:11px; font-weight:bold; margin-top:4px;">0.00</div>
+                </div>
+                <!-- Bottom-Left: TiffyAI Wallet Savings -->
+                <div class="harvest-box" id="box-wallet-tokens" onclick="setActiveAccount('wallet_tokens')">
+                    <p style="font-size:7px; color:#888; margin:0;">TiffyAI Savings</p>
+                    <div id="walletTokenDisplay" style="font-size:11px; font-weight:bold; margin-top:4px;">0.00</div>
+                </div>
+                <!-- Bottom-Right: TUSD-Nitro Wallet Savings -->
+                <div class="harvest-box" id="box-wallet-tusd" onclick="setActiveAccount('wallet_tusd')">
+                    <p style="font-size:7px; color:#888; margin:0;">TUSD Savings</p>
+                    <div id="walletTusdDisplay" style="font-size:11px; font-weight:bold; margin-top:4px;">0.00</div>
+                </div>
+            </div>
+
+            <!-- Convert & Reverse Convert Action Buttons -->
+            <button id="collectBtn" class="action-panel-btn hidden" style="background:var(--electric-blue); color:#000; box-shadow: 0 0 15px var(--electric-blue);" onclick="collectEarnings()">CONVERT TO NITRO (1:20)</button>
+            <button id="reverseCollectBtn" class="action-panel-btn hidden" style="background:rgba(0,240,255,0.15); border:1px solid var(--electric-blue); color:var(--electric-blue);" onclick="reverseCollectEarnings()">CONVERT TO TIFFYAI TOKENS (20:1)</button>
+        </div>
+        <button class="action-panel-btn" onclick="openTapToPayMode()">SEND <span id="activeAccountLabel">NITRO</span></button>
+        <button class="action-panel-btn" onclick="activateScanner()">RECEIVE ASSET</button>
+        <!-- Staking Reward Button Connected from Contract -->
+        <button class="action-panel-btn" style="background:rgba(255,0,127,0.15); border-color:var(--shocking-pink); color:var(--shocking-pink); box-shadow:0 0 10px var(--shocking-pink);" onclick="claimStakingRewards()">CLAIM STAKING REWARDS (CONTRACT)</button>
+        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://tiffyai-usd.github.io/Withdrawal/withdrawal.html'">WITHDRAW FUNDS TO CRYPTO WALLET</button>
+        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://www.bitrefill.com/'">BITREFILL (BUY AIRTIME & VOUCHERS)</button>
+        <button class="action-panel-btn" style="color:var(--electric-blue);" onclick="window.location.href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=NVPAZWBES9WAS'">TOP-UP $10 WITH BANK CARD (PAYPAL)</button>
+    </div>
+
+    <!-- PAIRING / QR SEND VIEW -->
+    <div id="pairingView" class="hidden">
+        <canvas id="qrcode"></canvas>
+        <div class="share-container">
+            <button class="share-btn" onclick="shareTransaction()">SHARE QR & REWARD 🔗</button>
+        </div>
+        <button class="action-panel-btn" onclick="cancelPairingMode()">CANCEL & REFUND</button>
+    </div>
+
+    <!-- SCANNER VIEW -->
+    <div id="scannerView" class="hidden">
+        <div class="viewfinder-wrapper" id="camera-viewfinder"></div>
+        <input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
+        <button class="action-panel-btn" style="background:var(--electric-blue); color:#000; box-shadow: 0 0 15px var(--electric-blue);" onclick="document.getElementById('qr-file-input').click()">UPLOAD QR IMAGE</button>
+        <button class="action-panel-btn" onclick="stopScanner()">CANCEL</button>
+    </div>
+</div>
+
+<script>
+    let activeScanner = null, currentPin = "", activeAccount = "nitro", currIdx = parseInt(localStorage.getItem("Tiffy_Pref_Currency") || "0");
+    let activeTxData = null; 
+    
+    const TIFFY_TOKEN_ADDRESS = "0xE488253DD6B4D31431142F1b7601C96f24Fb7dd5";
+    const STABLE_TUSD_ADDRESS = "0xcf11e2D51481Cb59Bf015FCc84324d1659984D07";
+    
+    const ABI = [
+        {"constant": true, "inputs": [{"name": "account", "type": "address"}], "name": "balanceOf", "outputs": [{"name": "", "type": "uint256"}], "type": "function", "stateMutability": "view"},
+        {"constant": true, "inputs": [], "name": "decimals", "outputs": [{"name": "", "type": "uint8"}], "type": "function", "stateMutability": "view"},
+        {"constant": true, "inputs": [], "name": "symbol", "outputs": [{"name": "", "type": "string"}], "type": "function", "stateMutability": "view"},
+        {"inputs": [], "name": "claim", "outputs": [], "stateMutability": "payable", "type": "function"},
+        {"inputs": [], "name": "FIXED_BNB_FEE", "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"}
+    ];
+
+    const CURRENCIES = [
+        {name: "USD", rate: 1.0}, {name: "ZAR", rate: 19.50}, {name: "EUR", rate: 0.92},
+        {name: "NGN", rate: 1500.0}, {name: "INR", rate: 83.0}, {name: "CNY", rate: 7.20},
+        {name: "AUD", rate: 1.50}
+    ];
+
+    function getAssetSymbol(assetKey) {
+        if (assetKey === 'terminal_tokens' || assetKey === 'wallet_tokens') return 'TIFFY';
+        if (assetKey === 'nitro' || assetKey === 'wallet_tusd') return 'TUSD';
+        return 'TUSD';
+    }
+
+    function isTxValid(txId, timestamp) {
+        const now = Date.now();
+        if (now - timestamp > (24 * 60 * 60 * 1000)) return { valid: false, msg: "QR Code expired (24h limit)." };
+        let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
+        if (usedTxs.includes(txId)) return { valid: false, msg: "This QR code has already been used." };
+        return { valid: true };
+    }
+
+    function recordLedger(type, assetKey, amount) {
+        let ledger = JSON.parse(localStorage.getItem("Tiffy_Transaction_Ledger") || "[]");
+        ledger.push({
+            type: type, 
+            asset: assetKey,
+            amount: parseFloat(amount),
+            timestamp: Date.now()
+        });
+        localStorage.setItem("Tiffy_Transaction_Ledger", JSON.stringify(ledger));
+    }
+
+    async function fetchAndCompareOnChainBalances() {
+        let wallet = localStorage.getItem("walletAddress");
+        if (!wallet) {
+            const profile = JSON.parse(localStorage.getItem("Tiffy_Matchmaker_Profile") || "{}");
+            wallet = profile.walletAddress;
+        }
+
+        if (!wallet || wallet.length !== 42 || !wallet.startsWith("0x")) return;
+
+        try {
+            const web3 = new Web3("https://bsc-dataseed1.binance.org/");
+            
+            // 1. Tiffy Wallet Savings On-Chain Sync
+            try {
+                const tiffyContract = new web3.eth.Contract(ABI, TIFFY_TOKEN_ADDRESS);
+                const tiffyBal = await tiffyContract.methods.balanceOf(wallet).call();
+                const tiffyDecimals = await tiffyContract.methods.decimals().call();
+                const liveTiffy = Number(tiffyBal) / Math.pow(10, Number(tiffyDecimals));
+                
+                let baseTiffy = localStorage.getItem("Tiffy_OnChain_Wallet_Balance");
+                if (baseTiffy === null) {
+                    localStorage.setItem("Tiffy_OnChain_Wallet_Balance", liveTiffy.toFixed(4));
+                } else {
+                    let prevOnChainReported = parseFloat(localStorage.getItem("Tiffy_OnChain_Last_Remote_Bal") || liveTiffy);
+                    let externalDelta = liveTiffy - prevOnChainReported;
+                    
+                    if (Math.abs(externalDelta) > 0.00001) {
+                        if (externalDelta < 0) {
+                            recordLedger('external_send', 'wallet_tokens', Math.abs(externalDelta));
+                        } else {
+                            recordLedger('external_receive', 'wallet_tokens', externalDelta);
+                        }
+                    }
+                    localStorage.setItem("Tiffy_OnChain_Last_Remote_Bal", liveTiffy.toFixed(4));
+                }
+            } catch (e) {
+                console.error("Tiffy wallet balance fetch failed:", e);
+            }
+
+            // 2. TUSD Wallet Savings On-Chain Sync
+            try {
+                const tusdContract = new web3.eth.Contract(ABI, STABLE_TUSD_ADDRESS);
+                const tusdBal = await tusdContract.methods.balanceOf(wallet).call();
+                const tusdDecimals = await tusdContract.methods.decimals().call();
+                const liveTusd = Number(tusdBal) / Math.pow(10, Number(tusdDecimals));
+                
+                let baseTusd = localStorage.getItem("TUSD_OnChain_Wallet_Balance");
+                if (baseTusd === null) {
+                    localStorage.setItem("TUSD_OnChain_Wallet_Balance", liveTusd.toFixed(4));
+                } else {
+                    let prevOnChainReported = parseFloat(localStorage.getItem("TUSD_OnChain_Last_Remote_Bal") || liveTusd);
+                    let externalDelta = liveTusd - prevOnChainReported;
+
+                    if (Math.abs(externalDelta) > 0.00001) {
+                        if (externalDelta < 0) {
+                            recordLedger('external_send', 'wallet_tusd', Math.abs(externalDelta));
+                        } else {
+                            recordLedger('external_receive', 'wallet_tusd', externalDelta);
+                        }
+                    }
+                    localStorage.setItem("TUSD_OnChain_Last_Remote_Bal", liveTusd.toFixed(4));
+                }
+            } catch (e) {
+                console.error("TUSD wallet balance fetch failed:", e);
+            }
+        } catch (err) {
+            console.error("Web3 provider connection error:", err);
+        }
+    }
+
+    function calculateAccountBalanceFromLedger(assetKey) {
+        let baseline = 0.0;
+        if (assetKey === 'terminal_tokens') {
+            baseline = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || localStorage.getItem("Tiffy_Terminal_Tokens") || "0.00");
+        } else if (assetKey === 'nitro') {
+            let kycNitro = localStorage.getItem("KYC_Verified_Hash") ? 10.00 : 0.00;
+            baseline = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || kycNitro);
+        } else if (assetKey === 'wallet_tokens') {
+            baseline = parseFloat(localStorage.getItem("Tiffy_OnChain_Wallet_Balance") || "0.00");
+        } else if (assetKey === 'wallet_tusd') {
+            baseline = parseFloat(localStorage.getItem("TUSD_OnChain_Wallet_Balance") || "0.00");
+        }
+
+        let ledger = JSON.parse(localStorage.getItem("Tiffy_Transaction_Ledger") || "[]");
+        let netBalance = baseline;
+
+        ledger.forEach(tx => {
+            if (tx.asset === assetKey) {
+                if (tx.type === 'internal_send' || tx.type === 'external_send') {
+                    netBalance -= tx.amount;
+                } else if (tx.type === 'internal_receive' || tx.type === 'external_receive' || tx.type === 'refund') {
+                    netBalance += tx.amount;
+                } else if (tx.type === 'conversion' && assetKey === 'terminal_tokens') {
+                    netBalance -= tx.amount;
+                } else if (tx.type === 'conversion' && assetKey === 'nitro') {
+                    netBalance += (tx.amount * 20);
+                } else if (tx.type === 'reverse_conversion' && assetKey === 'terminal_tokens') {
+                    netBalance += (tx.amount * 20);
+                } else if (tx.type === 'reverse_conversion' && assetKey === 'nitro') {
+                    netBalance -= tx.amount;
+                }
+            }
+        });
+
+        return Math.max(0, netBalance);
+    }
+
+    async function initUI() { 
+        if(localStorage.getItem("Tiffy_PIN_Locked") === "true") document.getElementById('changePinBtn').classList.add('hidden'); 
+        
+        let currentNitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
+        if (currentNitro <= 0 && localStorage.getItem("KYC_Verified_Hash")) {
+            localStorage.setItem("TUSD_Nitro_Storage", "10.00");
+        }
+
+        let legacyHarvest = localStorage.getItem("Tiffy_Terminal_Tokens");
+        if (legacyHarvest && !localStorage.getItem("Tiffy_Harvest_Pending")) {
+            localStorage.setItem("Tiffy_Harvest_Pending", legacyHarvest);
+        }
+
+        await fetchAndCompareOnChainBalances();
+        setActiveAccount('nitro'); 
+    }
+
+    function inputPin(n) { if(currentPin.length < 6) { currentPin += n; updateDots(); } }
+    function clearPin() { currentPin = ""; updateDots(); }
+    function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i < currentPin.length)); }
+    function cycleCurrency() { currIdx = (currIdx + 1) % CURRENCIES.length; localStorage.setItem("Tiffy_Pref_Currency", currIdx); loadBalances(); }
+
+    function setInitialPin() {
+        if (!localStorage.getItem("KYC_Verified_Hash")) {
+            alert("VERIFICATION REQUIRED: Please complete your Business Registration and top up your account with at least $10.");
+            return;
+        }
+        const userPin = prompt("Enter a new 4-6 digit PIN to secure your wallet:", "");
+        if (userPin === null) return;
+        if (userPin.length < 4 || userPin.length > 6 || isNaN(userPin)) {
+            alert("Invalid PIN. Please enter a 4-6 digit numeric PIN.");
+            return;
+        }
+        
+        localStorage.setItem("User_Access_PIN", userPin);
+        
+        let currentNitro = calculateAccountBalanceFromLedger('nitro');
+        if (currentNitro < 10.00) {
+            let diff = 10.00 - currentNitro;
+            recordLedger('external_receive', 'nitro', diff);
+        }
+        
+        localStorage.setItem("Tiffy_PIN_Locked", "true");
+        document.getElementById('changePinBtn').classList.add('hidden');
+        alert("Success! Your PIN is set. TUSD-Nitro balance updated.");
+        loadBalances();
+    }
+
+    function setActiveAccount(type) {
+        activeAccount = type;
+        document.getElementById('box-terminal-tokens').classList.toggle('active', type === 'terminal_tokens');
+        document.getElementById('box-nitro').classList.toggle('active', type === 'nitro');
+        document.getElementById('box-wallet-tokens').classList.toggle('active', type === 'wallet_tokens');
+        document.getElementById('box-wallet-tusd').classList.toggle('active', type === 'wallet_tusd');
+        
+        let labelName = 'NITRO';
+        if (type === 'terminal_tokens') labelName = 'TIFFYAI TOKENS';
+        if (type === 'wallet_tokens') labelName = 'TIFFY SAVINGS';
+        if (type === 'wallet_tusd') labelName = 'TUSD SAVINGS';
+        document.getElementById('activeAccountLabel').innerText = labelName;
+
+        document.getElementById('collectBtn').classList.toggle('hidden', type !== 'terminal_tokens');
+        document.getElementById('reverseCollectBtn').classList.toggle('hidden', type !== 'nitro');
+        loadBalances();
+    }
+
+    function authenticate() {
+        const savedPin = localStorage.getItem("User_Access_PIN");
+        if (!savedPin) { alert("PIN not set. Use 'Setup PIN' to start."); return; }
+        if(currentPin === savedPin) {
+            document.getElementById('authView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.remove('hidden');
+            loadBalances();
+        } else { alert("Access Denied"); clearPin(); }
+    }
+
+    function loadBalances() {
+        let terminalTokens = calculateAccountBalanceFromLedger('terminal_tokens');
+        let nitroBal = calculateAccountBalanceFromLedger('nitro');
+        let walletTokens = calculateAccountBalanceFromLedger('wallet_tokens');
+        let walletTusd = calculateAccountBalanceFromLedger('wallet_tusd');
+        
+        let rate = CURRENCIES[currIdx].rate;
+        let activeVal = nitroBal;
+        if (activeAccount === 'terminal_tokens') activeVal = terminalTokens;
+        if (activeAccount === 'wallet_tokens') activeVal = walletTokens;
+        if (activeAccount === 'wallet_tusd') activeVal = walletTusd;
+       
+        document.getElementById('terminalTokenDisplay').innerText = terminalTokens.toFixed(2);
+        document.getElementById('nitroDisplay').innerText = nitroBal.toFixed(2);
+        document.getElementById('walletTokenDisplay').innerText = walletTokens.toFixed(2);
+        document.getElementById('walletTusdDisplay').innerText = walletTusd.toFixed(2);
+        
+        document.getElementById('totalBalanceDisplay').innerText = (activeVal * rate).toFixed(2) + " " + CURRENCIES[currIdx].name;
+    }
+
+    function collectEarnings() {
+        let terminalTokens = calculateAccountBalanceFromLedger('terminal_tokens');
+        if (terminalTokens > 0) {
+            recordLedger('conversion', 'terminal_tokens', terminalTokens);
+            loadBalances();
+            alert(`Successfully converted ${terminalTokens.toFixed(2)} TiffyAI Tokens into ${(terminalTokens * 20).toFixed(2)} TUSD-Nitro!`);
+        } else {
+            alert("No TiffyAI Tokens balance available to convert.");
+        }
+    }
+
+    function reverseCollectEarnings() {
+        let nitroBal = calculateAccountBalanceFromLedger('nitro');
+        let amountInput = prompt(`Enter TUSD-Nitro amount to convert back to TiffyAI Tokens (Available: ${nitroBal.toFixed(2)} TUSD, Rate 20 TUSD = 1 TIFFY):`, "20");
+        if (!amountInput) return;
+        let tusdAmount = parseFloat(amountInput);
+        if (isNaN(tusdAmount) || tusdAmount <= 0) {
+            alert("Invalid amount.");
+            return;
+        }
+        if (tusdAmount > nitroBal) {
+            alert("Insufficient TUSD-Nitro balance for this conversion.");
+            return;
+        }
+
+        let tiffyReceived = tusdAmount / 20.0;
+        recordLedger('reverse_conversion', 'nitro', tusdAmount);
+        recordLedger('reverse_conversion', 'terminal_tokens', tiffyReceived);
+        loadBalances();
+        alert(`Successfully converted ${tusdAmount.toFixed(2)} TUSD-Nitro back into ${tiffyReceived.toFixed(2)} TiffyAI Tokens!`);
+    }
+
+    function openTapToPayMode() {
+        const currentBalanceBase = calculateAccountBalanceFromLedger(activeAccount);
+        const currentCurrency = CURRENCIES[currIdx];
+        const currentBalanceLocal = currentBalanceBase * currentCurrency.rate;
+
+        let amt = prompt(`Enter amount to send from ${activeAccount.toUpperCase()} in ${currentCurrency.name} (Current Balance: ${currentBalanceLocal.toFixed(2)} ${currentCurrency.name}):`);
+        if(!amt) return;
+        const sendAmountLocal = parseFloat(amt);
+        if (isNaN(sendAmountLocal) || sendAmountLocal <= 0) { alert("Invalid amount."); return; }
+        if (sendAmountLocal > currentBalanceLocal) { alert("Insufficient funds in this account!"); return; }
+       
+        const sendAmountBase = sendAmountLocal / currentCurrency.rate;
+
+        recordLedger('internal_send', activeAccount, sendAmountBase);
+        loadBalances();
+
+        activeTxData = {
+            id: 'tx_' + Math.random().toString(36).substr(2, 9),
+            timestamp: Date.now(),
+            amount: sendAmountBase.toFixed(4),
+            displayAmount: sendAmountLocal.toFixed(2),
+            currencyName: currentCurrency.name,
+            asset: activeAccount
+        };
+
+        document.getElementById('dashboardView').classList.add('hidden');
+        document.getElementById('pairingView').classList.remove('hidden');
+        QRCode.toCanvas(document.getElementById('qrcode'), "TIFFY_TX:" + btoa(JSON.stringify(activeTxData)));
+    }
+
+    function cancelPairingMode() {
+        if (activeTxData) {
+            recordLedger('refund', activeTxData.asset, activeTxData.amount);
+            activeTxData = null;
+            loadBalances();
+        }
+        exitMode();
+    }
+
+    async function shareTransaction() {
+        const canvas = document.getElementById('qrcode');
+        const shareText = "Claim your reward: https://tiffyai-usd.github.io/Transact/index46.html";
+        try {
+            const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+            const file = new File([blob], 'Tiffy_QR.png', { type: 'image/png' });
+            if (navigator.share) await navigator.share({title: 'Tiffy AI', text: shareText, files: [file]});
+            else alert(shareText);
+        } catch (e) { alert(shareText); }
+    }
+
+    function processQRData(data) {
+        if(data.startsWith("TIFFY_TX:")) {
+            try {
+                const tx = JSON.parse(atob(data.split(":")[1]));
+                
+                if (activeTxData && tx.id === activeTxData.id) {
+                    activeTxData = null;
+                    loadBalances();
+                    alert("Transaction cancelled. Funds returned to your balance.");
+                    stopScanner();
+                    return;
+                }
+
+                const check = isTxValid(tx.id, tx.timestamp);
+                if (!check.valid) {
+                    alert(check.msg);
+                } else {
+                    let usedTxs = JSON.parse(localStorage.getItem("Tiffy_Used_TXs") || "[]");
+                    usedTxs.push(tx.id);
+                    localStorage.setItem("Tiffy_Used_TXs", JSON.stringify(usedTxs));
+                    
+                    let targetAsset = tx.asset || 'nitro';
+                    recordLedger('internal_receive', targetAsset, tx.amount);
+                    loadBalances();
+                    
+                    let assetSymbol = getAssetSymbol(targetAsset);
+                    let displayString = `${parseFloat(tx.amount).toFixed(2)} ${assetSymbol}`;
+                    alert("Confirmed: Received " + displayString + " successfully.");
+                }
+            } catch(e) { alert("Invalid or corrupted QR data."); }
+        }
+        stopScanner();
+    }
+
+    async function claimStakingRewards() {
+        try {
+            if (!window.ethereum) {
+                alert("Web3 Wallet not detected. Please open inside a Web3 browser or MetaMask/Trust.");
+                return;
+            }
+            const web3 = new Web3(window.ethereum);
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const account = accounts[0];
+
+            const contract = new web3.eth.Contract(ABI, TIFFY_TOKEN_ADDRESS);
+            let fee = "0";
+            try {
+                fee = await contract.methods.FIXED_BNB_FEE().call();
+            } catch(err) {
+                fee = "0";
+            }
+
+            alert("Submitting Staking Reward Claim transaction to the smart contract...");
+            await contract.methods.claim().send({ from: account, value: fee });
+            alert("✅ Staking rewards successfully claimed from contract!");
+            await fetchAndCompareOnChainBalances();
+            loadBalances();
+        } catch (e) {
+            console.error("Staking claim error:", e);
+            alert("Staking claim failed: " + (e.message || e));
+        }
+    }
+
+    function handleFileUpload(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        const scanner = new Html5Qrcode("camera-viewfinder");
+        scanner.scanFile(file, true).then(data => {
+            e.target.value = '';
+            scanner.clear();
+            processQRData(data);
+        }).catch(() => {
+            alert("Error reading QR code from image.");
+            scanner.clear();
+        });
+    }
+
+    function activateScanner() {
+        document.getElementById('dashboardView').classList.add('hidden');
+        document.getElementById('scannerView').classList.remove('hidden');
+        activeScanner = new Html5Qrcode("camera-viewfinder");
+        activeScanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            (data) => {
+                activeScanner.stop().then(() => {
+                    processQRData(data);
+                }).catch(() => {
+                    processQRData(data);
+                });
+            }
+        );
+    }
+
+    function stopScanner() { if(activeScanner) activeScanner.stop().then(exitMode).catch(exitMode); else exitMode(); }
+    function exitMode() { document.getElementById('pairingView').classList.add('hidden'); document.getElementById('scannerView').classList.add('hidden'); document.getElementById('dashboardView').classList.remove('hidden'); loadBalances(); }
+</script>
+</body>
+</html>
