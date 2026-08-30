@@ -232,10 +232,10 @@
     function calculateAccountBalanceFromLedger(assetKey) {
         let baseline = 0.0;
         if (assetKey === 'terminal_tokens') {
-            baseline = parseFloat(localStorage.getItem("Tiffy_Terminal_Tokens_Baseline") || "5.00");
+            baseline = parseFloat(localStorage.getItem("Tiffy_Harvest_Pending") || "0.00");
         } else if (assetKey === 'nitro') {
-            let kycNitro = localStorage.getItem("KYC_Verified_Hash") ? 10.00 : 0.00;
-            baseline = parseFloat(localStorage.getItem("TUSD_Nitro_Baseline") || kycNitro);
+            let kycNitro = localStorage.getItem("KYC_Verified_Hash") ? 0.00 : 0.00;
+            baseline = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || kycNitro);
         } else if (assetKey === 'wallet_tokens') {
             baseline = parseFloat(localStorage.getItem("Tiffy_Wallet_Baseline") || "0.00");
         } else if (assetKey === 'wallet_tusd') {
@@ -267,14 +267,14 @@
         
         let currentNitro = parseFloat(localStorage.getItem("TUSD_Nitro_Storage") || "0");
         if (currentNitro <= 0 && localStorage.getItem("KYC_Verified_Hash")) {
-            localStorage.setItem("TUSD_Nitro_Storage", "10.00");
+            localStorage.setItem("TUSD_Nitro_Storage", "0.00");
             if (!localStorage.getItem("TUSD_Nitro_Baseline")) {
-                localStorage.setItem("TUSD_Nitro_Baseline", "10.00");
+                localStorage.setItem("TUSD_Nitro_Baseline", "0.00");
             }
         }
 
-        if (!localStorage.getItem("Tiffy_Terminal_Tokens") && !localStorage.getItem("Tiffy_Terminal_Tokens_Baseline")) {
-            localStorage.setItem("Tiffy_Terminal_Tokens_Baseline", "5.00");
+        if (!localStorage.getItem("Tiffy_Harvest_Pending") && !localStorage.getItem("Tiffy_Harvest_Pending")) {
+            localStorage.setItem("Tiffy_Harvest_Pending", "0.00");
         }
 
         await fetchAndCompareOnChainBalances();
@@ -301,8 +301,8 @@
         localStorage.setItem("User_Access_PIN", userPin);
         
         let currentNitro = calculateAccountBalanceFromLedger('nitro');
-        if (currentNitro < 10.00) {
-            let diff = 10.00 - currentNitro;
+        if (currentNitro < 0.00) {
+            let diff = 0.00 - currentNitro;
             recordLedger('external_receive', 'nitro', diff);
         }
         
